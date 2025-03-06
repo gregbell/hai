@@ -1,1 +1,5 @@
-/target
+/target/
+# Rust backup files
+**/*.rs.bk
+# Release directory
+/release/
