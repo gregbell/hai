@@ -29,7 +29,7 @@ impl MockProvider {
 
 #[async_trait]
 impl Provider for MockProvider {
-    async fn get_command_suggestion(&self, prompt: &str, _system_prompt: &str) -> Result<String> {
+    async fn get_command_suggestion(&self, prompt: &str, _system_prompt: String) -> Result<String> {
         // Try to find an exact match
         if let Some(response) = self.responses.get(prompt) {
             return Ok(response.clone());

@@ -1,7 +1,7 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use async_trait::async_trait;
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde_json;
 
 use super::Provider;
 
@@ -31,20 +31,6 @@ impl OpenAIProvider {
     }
 }
 
-#[derive(Debug, Serialize)]
-struct OpenAIRequest {
-    model: String,
-    messages: Vec<Message>,
-    temperature: f32,
-    max_tokens: usize,
-}
-
-#[derive(Debug, Serialize)]
-struct Message {
-    role: String,
-    content: String,
-}
-
 #[derive(Debug, Deserialize)]
 struct OpenAIResponse {
     choices: Vec<Choice>,
@@ -62,54 +48,39 @@ struct ResponseMessage {
 
 #[async_trait]
 impl Provider for OpenAIProvider {
-    async fn get_command_suggestion(&self, prompt: &str, system_prompt: &str) -> Result<String> {
+    async fn get_command_suggestion(&self, prompt: &str, system_prompt: String) -> Result<String> {
         let client = reqwest::Client::new();
         
-        let mut headers = HeaderMap::new();
-        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-        headers.insert(
-            AUTHORIZATION,
-            HeaderValue::from_str(&format!("Bearer {}", self.auth_token))?,
-        );
-        
-        let request = OpenAIRequest {
-            model: self.model.clone(),
-            messages: vec![
-                Message {
-                    role: "system".to_string(),
-                    content: system_prompt.to_string(),
-                },
-                Message {
-                    role: "user".to_string(),
-                    content: prompt.to_string(),
-                },
-            ],
-            temperature: self.temperature,
-            max_tokens: self.max_tokens,
-        };
+        let messages = vec![
+            serde_json::json!({
+                "role": "system",
+                "content": system_prompt
+            }),
+            serde_json::json!({
+                "role": "user",
+                "content": prompt
+            })
+        ];
         
         let response = client
             .post(&self.api_url)
-            .headers(headers)
-            .json(&request)
+            .header("Content-Type", "application/json")
+            .header("Authorization", format!("Bearer {}", self.auth_token))
+            .json(&serde_json::json!({
+                "model": self.model,
+                "messages": messages,
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens,
+            }))
             .send()
-            .await
-            .context("Failed to send request to OpenAI API")?;
+            .await?;
         
-        let response_body: OpenAIResponse = response
-            .json()
-            .await
-            .context("Failed to parse OpenAI API response")?;
+        let response_json: OpenAIResponse = response.json().await?;
         
-        let command = response_body
-            .choices
-            .first()
-            .context("No choices in response")?
-            .message
-            .content
-            .trim()
-            .to_string();
-        
-        Ok(command)
+        if let Some(choice) = response_json.choices.first() {
+            Ok(choice.message.content.clone())
+        } else {
+            Err(anyhow::anyhow!("No choices in response"))
+        }
     }
 } 

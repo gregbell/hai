@@ -123,41 +123,77 @@ Looks good? Y/n
 
 hai's configuration is managed via a `config.toml` file located at `~/.config/hai/config.toml`. This file is created automatically when you first run hai, and you'll be guided through the setup process.
 
-### Example Configuration
+### Configuration Options
 
 ```toml
-# Default model to use if --model is not specified
+# The default model to use when --model is not specified
+# Default: "gpt-4o"
 default-model = "gpt-4o"
 
-# Global settings
-temperature = 0.7  # Controls randomness of responses
-confirm-by-default = false  # If true, executes commands without asking
-shell = "bash"  # Default shell for command execution
-log-file = "~/.config/hai/hai.log"  # Log file for debugging
-history-size = 50  # Number of past commands to keep in history
+# Controls the randomness in AI responses (0.0 to 1.0)
+# Lower values make responses more deterministic
+# Higher values make responses more creative
+# Default: 0.3
+temperature = 0.5
+
+# The shell to use for executing commands
+# Default: "bash"
+shell = "bash"
+
+# Maximum number of past commands to keep in history
+# Default: 50
+history-size = 50
+
+# System prompt used to guide the AI's behavior
+# Default: "You are a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting."
 system-prompt = "You are a helpful AI that converts natural language to shell commands."
-max-tokens = 100  # Token limit for response length
 
-# Configuration for OpenAI's GPT-4o model
+# Maximum number of tokens in the AI's response
+# Default: 100
+max-tokens = 100
+
+# Model configurations
+[models]
+
+# Example OpenAI configuration
 [models.gpt-4o]
-api-url = "https://api.openai.com/v1/chat/completions"
-auth-token = "your-openai-api-key"
+provider = "openai"  # Required: The AI provider to use ("openai" or "anthropic")
+model = "gpt-4"     # Optional: The specific model to use (defaults to key name if not specified)
+auth-token = ""     # Required: Your API authentication token
 
-# Configuration for Anthropic's Claude-3 model
+# Example Anthropic configuration
 [models.claude-3]
-api-url = "https://api.anthropic.com/v1/complete"
-auth-token = "your-anthropic-api-key"
+provider = "anthropic"
+model = "claude-3-opus-20240229"
+auth-token = ""
 ```
 
-### Selecting a Model at Runtime
+### Model Configuration
 
-You can specify which AI model to use by passing the `--model` flag followed by the model's name when running hai:
+Each model in the `[models]` section requires:
+- `provider`: The AI provider to use (currently supported: "openai" or "anthropic")
+- `auth-token`: Your API authentication token for the provider
+- `model`: (Optional) The specific model identifier. If not specified, uses the configuration key name
+
+The configuration supports multiple models, allowing you to switch between them using the `--model` flag:
 
 ```bash
-hai --model "claude-3" "list all running docker containers"
+hai --model claude-3 "list all docker containers"
 ```
 
-If the `--model` flag is omitted, hai will use the model specified in the `default-model` setting of your `config.toml`.
+### Environment Variables
+
+You can use environment variables to override configuration values:
+
+- `HAI_DEFAULT_MODEL`: Override the default model to use
+- `HAI_OPENAI_TOKEN`: Set the OpenAI API token
+- `HAI_ANTHROPIC_TOKEN`: Set the Anthropic API token
+- `SHELL`: Override the shell used for executing commands (defaults to "bash" if not set)
+
+Environment variables take precedence over values in the config file. This is useful for:
+- Temporarily switching models: `HAI_DEFAULT_MODEL=claude-3 hai "list files"`
+- Using different API keys: `HAI_OPENAI_TOKEN=sk-... hai "list files"`
+- Running with a different shell: `SHELL=zsh hai "list files"`
 
 ## Development
 

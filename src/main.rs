@@ -49,6 +49,57 @@ pub struct Config {
     models: Option<std::collections::HashMap<String, ModelConfig>>,
 }
 
+impl Config {
+    /// Get the default model name, can be overridden by HAI_DEFAULT_MODEL env var
+    pub fn default_model(&self) -> String {
+        std::env::var("HAI_DEFAULT_MODEL")
+            .ok()
+            .unwrap_or_else(|| self.default_model.clone().unwrap_or_else(|| "gpt-4o-mini".to_string()))
+    }
+
+    /// Get the temperature value (0.0 to 1.0)
+    pub fn temperature(&self) -> f32 {
+        self.temperature.unwrap_or(0.7)
+    }
+
+    /// Get the shell to use for command execution
+    pub fn shell(&self) -> String {
+        std::env::var("SHELL")
+            .ok()
+            .unwrap_or_else(|| self.shell.clone().unwrap_or_else(|| "bash".to_string()))
+    }
+
+    /// Get the maximum number of history entries to keep
+    pub fn history_size(&self) -> usize {
+        self.history_size.unwrap_or(50)
+    }
+
+    /// Get the system prompt for AI
+    pub fn system_prompt(&self) -> String {
+        self.system_prompt.clone().unwrap_or_else(|| 
+            "You are a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting.".to_string()
+        )
+    }
+
+    /// Get the maximum number of tokens for AI response
+    pub fn max_tokens(&self) -> usize {
+        self.max_tokens.unwrap_or(100)
+    }
+
+    /// Get the auth token for a specific provider, checking environment variables first
+    pub fn get_provider_auth_token(&self, provider: &str, model_config: &ModelConfig) -> String {
+        match provider {
+            "openai" => std::env::var("HAI_OPENAI_TOKEN")
+                .ok()
+                .unwrap_or_else(|| model_config.auth_token.clone()),
+            "anthropic" => std::env::var("HAI_ANTHROPIC_TOKEN")
+                .ok()
+                .unwrap_or_else(|| model_config.auth_token.clone()),
+            _ => model_config.auth_token.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ModelConfig {
     provider: String,
@@ -88,12 +139,7 @@ fn get_prompt_from_stdin() -> Result<String> {
 
 async fn get_command_suggestion(prompt: &str, config: &Config, model_name: &str) -> Result<String> {
     let provider = providers::create_provider(model_name, config)?;
-    
-    let system_prompt = config.system_prompt.as_deref().unwrap_or(
-        "You are a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting."
-    );
-    
-    provider.get_command_suggestion(prompt, system_prompt).await
+    provider.get_command_suggestion(prompt, config.system_prompt()).await
 }
 
 fn execute_command(command: &str, shell: &str) -> Result<()> {
@@ -112,7 +158,6 @@ fn execute_command(command: &str, shell: &str) -> Result<()> {
 
 async fn run() -> Result<()> {
     let cli = Cli::parse();
-    
     let config = load_config()?;
     
     // Handle history command
@@ -152,19 +197,15 @@ async fn run() -> Result<()> {
         return Err(anyhow::anyhow!("No prompt provided"));
     }
     
-    let model = cli.model.unwrap_or_else(|| 
-        config.default_model.clone().unwrap_or_else(|| "gpt-4o".to_string())
-    );
-    
+    let model = cli.model.unwrap_or_else(|| config.default_model());
     let command = get_command_suggestion(&prompt, &config, &model).await?;
     
     println!("Command: {}", command);
     
     // Load history with the configured history size
-    let history_size = config.history_size.unwrap_or(50);
     let mut history = match history::History::load() {
         Ok(h) => h,
-        Err(_) => history::History::new(history_size),
+        Err(_) => history::History::new(config.history_size()),
     };
     
     if cli.no_execute {
@@ -184,8 +225,7 @@ async fn run() -> Result<()> {
     };
     
     if should_execute {
-        let shell = config.shell.as_deref().unwrap_or("bash");
-        execute_command(&command, shell)?;
+        execute_command(&command, &config.shell())?;
         
         // Add to history as executed
         history.add_entry(&prompt, &command, true);
@@ -219,7 +259,7 @@ mod tests {
     async fn test_get_command_suggestion() {
         let mock_provider = MockProvider::new();
         let prompt = "list all files";
-        let system_prompt = "You are a helpful AI that converts natural language to shell commands.";
+        let system_prompt = "You are a helpful AI that converts natural language to shell commands.".to_string();
         
         let result = mock_provider.get_command_suggestion(prompt, system_prompt).await;
         
@@ -249,5 +289,45 @@ mod tests {
         // Test with a command that should fail
         let result = execute_command("exit 1", "bash");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_config_environment_variables() {
+        use std::env;
+        
+        // Set up a test config
+        let config = Config {
+            default_model: Some("default-model".to_string()),
+            temperature: Some(0.3),
+            shell: Some("bash".to_string()),
+            history_size: Some(100),
+            system_prompt: Some("default prompt".to_string()),
+            max_tokens: Some(50),
+            models: None,
+        };
+
+        // Test HAI_DEFAULT_MODEL override
+        env::set_var("HAI_DEFAULT_MODEL", "env-model");
+        assert_eq!(config.default_model(), "env-model");
+        env::remove_var("HAI_DEFAULT_MODEL");
+        assert_eq!(config.default_model(), "default-model");
+
+        // Test SHELL override
+        env::set_var("SHELL", "zsh");
+        assert_eq!(config.shell(), "zsh");
+        env::remove_var("SHELL");
+        assert_eq!(config.shell(), "bash");
+
+        // Test auth token overrides
+        let model_config = ModelConfig {
+            provider: "openai".to_string(),
+            model: None,
+            auth_token: "config-token".to_string(),
+        };
+
+        env::set_var("HAI_OPENAI_TOKEN", "env-token");
+        assert_eq!(config.get_provider_auth_token("openai", &model_config), "env-token");
+        env::remove_var("HAI_OPENAI_TOKEN");
+        assert_eq!(config.get_provider_auth_token("openai", &model_config), "config-token");
     }
 }

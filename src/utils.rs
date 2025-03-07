@@ -28,11 +28,8 @@ pub fn create_default_config_if_not_exists() -> Result<()> {
 default-model = "gpt-4o-mini"
 
 # Global settings
-confirm-by-default = false
-shell = "bash"
 history-size = 50
 
-# Add your models here
 [models.gpt-4o-mini]
 provider = "openai"
 model = "gpt-4o-mini"
@@ -68,12 +65,7 @@ pub fn guide_initial_setup() -> Result<()> {
         .items(&provider_options)
         .interact()?;
     
-    let mut config = String::from(r#"# Default model to use if --model is not specified
-temperature = 0.7
-confirm-by-default = false
-shell = "bash"
-system-prompt = "You are a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting."
-max-tokens = 100
+    let mut config = String::from(r#"# Global settings
 history-size = 50
 
 "#);
