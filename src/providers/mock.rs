@@ -2,7 +2,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use std::collections::HashMap;
 
-use super::AIProvider;
+use super::Provider;
 
 pub struct MockProvider {
     responses: HashMap<String, String>,
@@ -28,7 +28,7 @@ impl MockProvider {
 }
 
 #[async_trait]
-impl AIProvider for MockProvider {
+impl Provider for MockProvider {
     async fn get_command_suggestion(&self, prompt: &str, _system_prompt: &str) -> Result<String> {
         // Try to find an exact match
         if let Some(response) = self.responses.get(prompt) {

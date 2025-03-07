@@ -5,7 +5,7 @@ use serde::Deserialize;
 use std::io::{self, Read};
 use std::process::Command;
 
-mod ai_providers;
+mod providers;
 mod error;
 mod utils;
 mod history;
@@ -39,11 +39,7 @@ pub struct Config {
     #[serde(rename = "default-model")]
     default_model: Option<String>,
     temperature: Option<f32>,
-    #[serde(rename = "confirm-by-default")]
-    confirm_by_default: Option<bool>,
     shell: Option<String>,
-    #[serde(rename = "log-file")]
-    log_file: Option<String>,
     #[serde(rename = "history-size")]
     history_size: Option<usize>,
     #[serde(rename = "system-prompt")]
@@ -91,7 +87,7 @@ fn get_prompt_from_stdin() -> Result<String> {
 }
 
 async fn get_command_suggestion(prompt: &str, config: &Config, model_name: &str) -> Result<String> {
-    let provider = ai_providers::create_provider(model_name, config)?;
+    let provider = providers::create_provider(model_name, config)?;
     
     let system_prompt = config.system_prompt.as_deref().unwrap_or(
         "You are a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting."
@@ -217,7 +213,7 @@ fn main() -> ! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ai_providers::{MockProvider, AIProvider};
+    use crate::providers::{MockProvider, Provider};
     
     #[tokio::test]
     async fn test_get_command_suggestion() {

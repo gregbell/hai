@@ -12,14 +12,14 @@ pub use anthropic::AnthropicProvider;
 pub use mock::MockProvider;
 
 #[async_trait]
-pub trait AIProvider {
+pub trait Provider {
     async fn get_command_suggestion(&self, prompt: &str, system_prompt: &str) -> Result<String>;
 }
 
 pub fn create_provider(
     model_name: &str,
     config: &crate::Config,
-) -> Result<Box<dyn AIProvider>> {
+) -> Result<Box<dyn Provider>> {
     let models = config.models.as_ref().context("No models configured")?;
     let model_config = models.get(model_name).context(format!("Model '{}' not found in config", model_name))?;
     
