@@ -47,7 +47,7 @@ max-tokens = 100
 # Model configurations
 [models.gpt-4o-mini]
 provider = "openai"
-model = "gpt-4"
+model = "gpt-4o-mini"  # OpenAI's base GPT-4 model
 auth-token = ""  # Add your OpenAI API key here
 
 [models.claude-3]
@@ -83,6 +83,7 @@ pub fn guide_initial_setup() -> Result<()> {
         .interact()?;
     
     let mut config = String::from(r#"# Global settings
+temperature = 0.3
 history-size = 50
 
 "#);
@@ -90,11 +91,11 @@ history-size = 50
     match provider_selection {
         0 => {
             // OpenAI
-            config.push_str("default-model = \"gpt-4o\"\n\n");
+            config.push_str("default-model = \"gpt-4o-mini\"\n\n");
             config.push_str("# OpenAI configuration\n");
-            config.push_str("[models.gpt-4o]\n");
+            config.push_str("[models.gpt-4o-mini]\n");
             config.push_str("provider = \"openai\"\n");
-            config.push_str("model = \"gpt-4\"\n");
+            config.push_str("model = \"gpt-4o-mini\"\n");
             
             let api_key: String = Input::with_theme(&ColorfulTheme::default())
                 .with_prompt("Enter your OpenAI API key (or press Enter to skip)")
@@ -102,7 +103,7 @@ history-size = 50
                 .interact_text()?;
             
             if api_key.is_empty() {
-                config.push_str("auth-token = \"your-openai-api-key\"\n");
+                config.push_str("auth-token = \"\"\n");
                 println!("You'll need to edit the config file later to add your API key.");
             } else {
                 config.push_str(&format!("auth-token = \"{}\"\n", api_key));
@@ -122,7 +123,7 @@ history-size = 50
                 .interact_text()?;
             
             if api_key.is_empty() {
-                config.push_str("auth-token = \"your-anthropic-api-key\"\n");
+                config.push_str("auth-token = \"\"\n");
                 println!("You'll need to edit the config file later to add your API key.");
             } else {
                 config.push_str(&format!("auth-token = \"{}\"\n", api_key));
@@ -130,12 +131,12 @@ history-size = 50
         },
         _ => {
             // Skip
-            config.push_str("default-model = \"gpt-4o\"\n\n");
+            config.push_str("default-model = \"gpt-4o-mini\"\n\n");
             config.push_str("# OpenAI configuration\n");
-            config.push_str("[models.gpt-4o]\n");
+            config.push_str("[models.gpt-4o-mini]\n");
             config.push_str("provider = \"openai\"\n");
-            config.push_str("model = \"gpt-4\"\n");
-            config.push_str("auth-token = \"your-openai-api-key\"\n");
+            config.push_str("model = \"gpt-4o-mini\"\n");
+            config.push_str("auth-token = \"\"\n");
             println!("You'll need to edit the config file later to add your API key.");
         }
     }

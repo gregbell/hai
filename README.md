@@ -127,8 +127,8 @@ hai's configuration is managed via a `config.toml` file located at `~/.config/ha
 
 ```toml
 # The default model to use when --model is not specified
-# Default: "gpt-4o"
-default-model = "gpt-4o"
+# Default: "gpt-4o-mini"
+default-model = "gpt-4o-mini"
 
 # Controls the randomness in AI responses (0.0 to 1.0)
 # Lower values make responses more deterministic
@@ -156,10 +156,10 @@ max-tokens = 100
 [models]
 
 # Example OpenAI configuration
-[models.gpt-4o]
-provider = "openai"  # Required: The AI provider to use ("openai" or "anthropic")
-model = "gpt-4"     # Optional: The specific model to use (defaults to key name if not specified)
-auth-token = ""     # Required: Your API authentication token
+[models.gpt-4o-mini]
+provider = "openai"   # Required: The AI provider to use ("openai" or "anthropic")
+model = "gpt-4o-mini" # Optional: The specific model to use (defaults to key name if not specified)
+auth-token = ""       # Required: Your API authentication token
 
 # Example Anthropic configuration
 [models.claude-3]

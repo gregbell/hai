@@ -34,6 +34,8 @@ impl OpenAIProvider {
 #[derive(Debug, Deserialize)]
 struct OpenAIResponse {
     choices: Vec<Choice>,
+    #[serde(default)]
+    error: Option<OpenAIError>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -44,6 +46,13 @@ struct Choice {
 #[derive(Debug, Deserialize)]
 struct ResponseMessage {
     content: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct OpenAIError {
+    message: String,
+    #[serde(rename = "type")]
+    error_type: String,
 }
 
 #[async_trait]
@@ -62,25 +71,50 @@ impl Provider for OpenAIProvider {
             })
         ];
         
+        let request_body = serde_json::json!({
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        });
+
         let response = client
             .post(&self.api_url)
             .header("Content-Type", "application/json")
             .header("Authorization", format!("Bearer {}", self.auth_token))
-            .json(&serde_json::json!({
-                "model": self.model,
-                "messages": messages,
-                "temperature": self.temperature,
-                "max_tokens": self.max_tokens,
-            }))
+            .json(&request_body)
             .send()
             .await?;
-        
-        let response_json: OpenAIResponse = response.json().await?;
+
+        let status = response.status();
+        let response_text = response.text().await?;
+
+        // Try to parse as error response first
+        if !status.is_success() {
+            if let Ok(error_response) = serde_json::from_str::<OpenAIResponse>(&response_text) {
+                if let Some(error) = error_response.error {
+                    return Err(anyhow::anyhow!(
+                        "OpenAI API error ({}): {}",
+                        error.error_type,
+                        error.message
+                    ));
+                }
+            }
+            return Err(anyhow::anyhow!(
+                "OpenAI API error ({}): {}",
+                status,
+                response_text
+            ));
+        }
+
+        // Parse successful response
+        let response_json: OpenAIResponse = serde_json::from_str(&response_text)
+            .map_err(|e| anyhow::anyhow!("Failed to parse OpenAI response: {}. Response: {}", e, response_text))?;
         
         if let Some(choice) = response_json.choices.first() {
             Ok(choice.message.content.clone())
         } else {
-            Err(anyhow::anyhow!("No choices in response"))
+            Err(anyhow::anyhow!("No response choices in OpenAI response: {}", response_text))
         }
     }
 } 
