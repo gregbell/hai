@@ -59,7 +59,7 @@ impl Config {
 
     /// Get the temperature value (0.0 to 1.0)
     pub fn temperature(&self) -> f32 {
-        self.temperature.unwrap_or(0.7)
+        self.temperature.unwrap_or(0.3)
     }
 
     /// Get the shell to use for command execution
@@ -74,10 +74,26 @@ impl Config {
         self.history_size.unwrap_or(50)
     }
 
-    /// Get the system prompt for AI
+    /// Get the system prompt for AI, including OS and shell information
     pub fn system_prompt(&self) -> String {
-        self.system_prompt.clone().unwrap_or_else(|| 
+        let base_prompt = self.system_prompt.clone().unwrap_or_else(|| 
             "You are a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting.".to_string()
+        );
+
+        // Get OS information
+        let os_name = std::env::consts::OS;
+        let os_version = get_os_version();
+
+        // Get shell information
+        let shell = self.shell();
+        let shell_name = std::path::Path::new(&shell)
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("unknown");
+
+        format!(
+            "{}\nOperating System: {} {}\nShell: {}\nPlease ensure all commands are compatible with this environment.",
+            base_prompt, os_name, os_version, shell_name
         )
     }
 
@@ -97,6 +113,79 @@ impl Config {
                 .unwrap_or_else(|| model_config.auth_token.clone()),
             _ => model_config.auth_token.clone(),
         }
+    }
+}
+
+/// Get the OS version in a cross-platform way
+fn get_os_version() -> String {
+    match std::env::consts::OS {
+        "linux" => {
+            // Try reading from /etc/os-release first (most Linux distributions)
+            if let Ok(content) = std::fs::read_to_string("/etc/os-release") {
+                // First try PRETTY_NAME for more descriptive version
+                if let Some(version) = content.lines()
+                    .find(|line| line.starts_with("PRETTY_NAME="))
+                    .map(|line| line.trim_start_matches("PRETTY_NAME=").trim_matches('"').to_string())
+                {
+                    return version;
+                }
+                
+                // Then try VERSION_ID for distributions that have it
+                if let Some(version) = content.lines()
+                    .find(|line| line.starts_with("VERSION_ID="))
+                    .map(|line| line.trim_start_matches("VERSION_ID=").trim_matches('"').to_string())
+                {
+                    return version;
+                }
+                
+                // For rolling releases like Arch, use NAME
+                if let Some(version) = content.lines()
+                    .find(|line| line.starts_with("NAME="))
+                    .map(|line| line.trim_start_matches("NAME=").trim_matches('"').to_string())
+                {
+                    return version;
+                }
+            }
+            
+            // Fallback to uname if os-release is not available or readable
+            if let Ok(output) = std::process::Command::new("uname").arg("-r").output() {
+                if let Ok(version) = String::from_utf8(output.stdout) {
+                    return version.trim().to_string();
+                }
+            }
+            
+            "unknown version".to_string()
+        },
+        "macos" => {
+            // Use sw_vers command on macOS
+            if let Ok(output) = std::process::Command::new("sw_vers").arg("-productVersion").output() {
+                if let Ok(version) = String::from_utf8(output.stdout) {
+                    return version.trim().to_string();
+                }
+            }
+            
+            "unknown version".to_string()
+        },
+        "windows" => {
+            // Use PowerShell to get Windows version
+            let args = [
+                "-NoProfile",
+                "-Command",
+                "[System.Environment]::OSVersion.Version.ToString()",
+            ];
+            
+            if let Ok(output) = std::process::Command::new("powershell")
+                .args(&args)
+                .output()
+            {
+                if let Ok(version) = String::from_utf8(output.stdout) {
+                    return version.trim().to_string();
+                }
+            }
+            
+            "unknown version".to_string()
+        },
+        _ => "unknown version".to_string(),
     }
 }
 
@@ -259,7 +348,12 @@ mod tests {
     async fn test_get_command_suggestion() {
         let mock_provider = MockProvider::new();
         let prompt = "list all files";
-        let system_prompt = "You are a helpful AI that converts natural language to shell commands.".to_string();
+        let system_prompt = format!(
+            "You are a helpful AI that converts natural language to shell commands.\nOperating System: {} {}\nShell: {}\nPlease ensure all commands are compatible with this environment.",
+            std::env::consts::OS,
+            "test version",
+            "bash"
+        );
         
         let result = mock_provider.get_command_suggestion(prompt, system_prompt).await;
         
@@ -329,5 +423,17 @@ mod tests {
         assert_eq!(config.get_provider_auth_token("openai", &model_config), "env-token");
         env::remove_var("HAI_OPENAI_TOKEN");
         assert_eq!(config.get_provider_auth_token("openai", &model_config), "config-token");
+    }
+
+    #[test]
+    fn test_os_version() {
+        let version = get_os_version();
+        assert!(!version.is_empty(), "OS version should not be empty");
+        assert_ne!(version, "unknown version", "OS version should be detected");
+        
+        // Test that the version string doesn't contain any unwanted characters
+        assert!(!version.contains('\0'), "Version should not contain null bytes");
+        assert!(!version.contains('\n'), "Version should not contain newlines");
+        assert!(!version.contains('\r'), "Version should not contain carriage returns");
     }
 }
