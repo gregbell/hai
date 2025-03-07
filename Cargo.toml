@@ -2,8 +2,8 @@
 name = "hai"
 version = "0.1.0"
 edition = "2021"
-description = "A CLI tool that turns natural language into shell commands using AI"
-authors = ["Your Name <your.email@example.com>"]
+description = "~ tiny CLI tool that turns natural language into Bash or Zsh commands"
+authors = ["Greg Bell <code@gregbell.ca>"]
 license = "GPL-3.0"
 
 [dependencies]

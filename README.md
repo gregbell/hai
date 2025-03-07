@@ -1,16 +1,14 @@
 # hai
 
-**hai** is a tiny CLI tool that turns natural language into Bash or Zsh commands using AI. You describe what you want to do, hai suggests a command, and asks if you'd like to run it. A simple, unix-y tool that does one thing well.
+Meet **hai**, a tiny CLI tool that turns natural language into Bash or Zsh
+commands. You describe what you want to do, hai suggests a command, and asks if
+you'd like to run it. A simple, unix-y tool that does one thing /really/ well.
+
 
 ```bash
-hai use pandoc to convert all the markdown files in this directory to an ebook
-```
-
-Output:
-
-```
-Command: pandoc -i *.md -o book.epub
-Looks good? Y/n
+$> hai "use pandoc to convert all the markdown files in this directory to an ebook"
+Command: pandoc -f markdown -t epub -o book.epub *.md
+✔ Looks good? · yes
 ```
 
 ## Installation
@@ -77,7 +75,9 @@ This will display a table of your past commands, including:
 - The command that was generated
 - Whether the command was executed
 
-The history is stored in `~/.config/hai/history.json`. You can configure the maximum number of commands to keep in history by setting the `history-size` option in your config file.
+The history is stored in `~/.config/hai/history.json`. You can configure the
+maximum number of commands to keep in history by setting the `history-size`
+option in your config file.
 
 ## More examples
 
@@ -121,7 +121,9 @@ Looks good? Y/n
 
 ## Configuration
 
-hai's configuration is managed via a `config.toml` file located at `~/.config/hai/config.toml`. This file is created automatically when you first run hai, and you'll be guided through the setup process.
+hai's configuration is managed via a `config.toml` file located at
+`~/.config/hai/config.toml`. This file is created automatically when you first
+run hai, and you'll be guided through the setup process.
 
 ### Configuration Options
 
@@ -171,11 +173,14 @@ auth-token = ""
 ### Model Configuration
 
 Each model in the `[models]` section requires:
-- `provider`: The AI provider to use (currently supported: "openai" or "anthropic")
+- `provider`: The AI provider to use (currently supported: "openai" or
+  "anthropic")
 - `auth-token`: Your API authentication token for the provider
-- `model`: (Optional) The specific model identifier. If not specified, uses the configuration key name
+- `model`: (Optional) The specific model identifier. If not specified, uses the
+  configuration key name
 
-The configuration supports multiple models, allowing you to switch between them using the `--model` flag:
+The configuration supports multiple models, allowing you to switch between them
+using the `--model` flag:
 
 ```bash
 hai --model claude-3 "list all docker containers"
@@ -188,9 +193,11 @@ You can use environment variables to override configuration values:
 - `HAI_DEFAULT_MODEL`: Override the default model to use
 - `HAI_OPENAI_TOKEN`: Set the OpenAI API token
 - `HAI_ANTHROPIC_TOKEN`: Set the Anthropic API token
-- `SHELL`: Override the shell used for executing commands (defaults to "bash" if not set)
+- `SHELL`: Override the shell used for executing commands (defaults to "bash" if
+  not set)
 
-Environment variables take precedence over values in the config file. This is useful for:
+Environment variables take precedence over values in the config file. This is
+useful for:
 - Temporarily switching models: `HAI_DEFAULT_MODEL=claude-3 hai "list files"`
 - Using different API keys: `HAI_OPENAI_TOKEN=sk-... hai "list files"`
 - Running with a different shell: `SHELL=zsh hai "list files"`
@@ -216,4 +223,4 @@ cargo build --release
 
 ## License
 
-GPL-3.0. See [LICENSE](LICENSE).
+This project is Copyright 2025 Greg Bell and licensed under the GPL-3.0. See [LICENSE](LICENSE).
