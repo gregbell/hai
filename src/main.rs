@@ -4,7 +4,6 @@ use dialoguer::{theme::ColorfulTheme, Confirm};
 use serde::Deserialize;
 use std::io::{self, Read};
 use std::process::Command;
-use std::collections::HashMap;
 
 mod providers;
 mod error;
@@ -262,9 +261,17 @@ fn get_prompt_from_stdin() -> Result<String> {
 }
 
 async fn get_command_suggestion(prompt: &str, config: &Config) -> Result<String> {
-    let model_name = config.default_model.as_deref().unwrap_or("gpt-4o-mini");
-    let provider = providers::create_provider(model_name, config)?;
-    
+    // Get the provider name with priority:
+    // 1. CLI --model flag
+    // 2. HAI_DEFAULT_MODEL env var
+    // 3. Config file default-model
+    // 4. Error out if none found
+    let provider_name = std::env::var("HAI_DEFAULT_MODEL")
+        .ok()
+        .or_else(|| config.default_model.clone())
+        .ok_or_else(|| anyhow::anyhow!("No model specified in config file or HAI_DEFAULT_MODEL environment variable"))?;
+
+    let provider = providers::create_provider(&provider_name, config)?;
     provider.get_command_suggestion(prompt, config.system_prompt()).await
 }
 
@@ -322,9 +329,18 @@ async fn run() -> Result<()> {
     if prompt.trim().is_empty() {
         return Err(anyhow::anyhow!("No prompt provided"));
     }
+
+    // Override environment variable if --model flag is provided
+    if let Some(model) = &cli.model {
+        std::env::set_var("HAI_DEFAULT_MODEL", model);
+    }
     
-    let model = cli.model.unwrap_or_else(|| config.default_model());
     let command = get_command_suggestion(&prompt, &config).await?;
+    
+    // Clean up environment variable if we set it
+    if cli.model.is_some() {
+        std::env::remove_var("HAI_DEFAULT_MODEL");
+    }
     
     println!("Command: {}", command);
     
@@ -379,12 +395,11 @@ fn main() -> ! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+    use std::collections::HashMap;
+    use std::env;
+
     #[tokio::test]
     async fn test_get_command_suggestion() {
-        // Create a mock provider directly
-        use crate::providers::MockProvider;
-        
         // Set up the config with a mock model
         let mut config = Config::default();
         let mut models = HashMap::new();
@@ -396,9 +411,15 @@ mod tests {
         config.models = Some(models);
         config.default_model = Some("mock".to_string());
         
+        // Override environment variable for testing
+        env::set_var("HAI_DEFAULT_MODEL", "mock");
+        
         // Test with a known prompt
         let prompt = "list all files";
         let result = get_command_suggestion(prompt, &config).await;
+        
+        // Clean up
+        env::remove_var("HAI_DEFAULT_MODEL");
         
         assert!(result.is_ok());
         if let Ok(command) = result {
