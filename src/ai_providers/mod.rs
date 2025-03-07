@@ -26,31 +26,32 @@ pub fn create_provider(
     let temperature = config.temperature.unwrap_or(0.7);
     let max_tokens = config.max_tokens.unwrap_or(100);
     
-    // Determine provider based on model name or API URL
-    if model_name.starts_with("gpt-") || model_config.api_url.contains("openai.com") {
-        Ok(Box::new(OpenAIProvider::new(
-            model_config.api_url.clone(),
-            model_config.auth_token.clone(),
-            model_name.to_string(),
-            temperature,
-            max_tokens,
-        )))
-    } else if model_name.starts_with("claude-") || model_config.api_url.contains("anthropic.com") {
-        Ok(Box::new(AnthropicProvider::new(
-            model_config.api_url.clone(),
-            model_config.auth_token.clone(),
-            model_name.to_string(),
-            temperature,
-            max_tokens,
-        )))
-    } else {
-        // Default to OpenAI provider
-        Ok(Box::new(OpenAIProvider::new(
-            model_config.api_url.clone(),
-            model_config.auth_token.clone(),
-            model_name.to_string(),
-            temperature,
-            max_tokens,
-        )))
+    // Determine provider based on the provider field
+    match model_config.provider.as_str() {
+        "openai" => {
+            let api_url = "https://api.openai.com/v1/chat/completions".to_string();
+            let model = model_config.model.clone().unwrap_or_else(|| model_name.to_string());
+            
+            Ok(Box::new(OpenAIProvider::new(
+                api_url,
+                model_config.auth_token.clone(),
+                model,
+                temperature,
+                max_tokens,
+            )))
+        },
+        "anthropic" => {
+            let api_url = "https://api.anthropic.com/v1/complete".to_string();
+            let model = model_config.model.clone().unwrap_or_else(|| model_name.to_string());
+            
+            Ok(Box::new(AnthropicProvider::new(
+                api_url,
+                model_config.auth_token.clone(),
+                model,
+                temperature,
+                max_tokens,
+            )))
+        },
+        provider => Err(anyhow::anyhow!("Unsupported provider: {}", provider)),
     }
 } 

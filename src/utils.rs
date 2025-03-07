@@ -25,19 +25,17 @@ pub fn create_default_config_if_not_exists() -> Result<()> {
     if !config_path.exists() {
         // Create a minimal default config
         let default_config = r#"# Default model to use if --model is not specified
-default-model = "gpt-4o"
+default-model = "gpt-4o-mini"
 
 # Global settings
-temperature = 0.7
 confirm-by-default = false
 shell = "bash"
-system-prompt = "You are a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting."
-max-tokens = 100
 history-size = 50
 
 # Add your models here
-[models.gpt-4o]
-api-url = "https://api.openai.com/v1/chat/completions"
+[models.gpt-4o-mini]
+provider = "openai"
+model = "gpt-4o-mini"
 auth-token = "your-openai-api-key"
 "#;
         
@@ -86,7 +84,8 @@ history-size = 50
             config.push_str("default-model = \"gpt-4o\"\n\n");
             config.push_str("# OpenAI configuration\n");
             config.push_str("[models.gpt-4o]\n");
-            config.push_str("api-url = \"https://api.openai.com/v1/chat/completions\"\n");
+            config.push_str("provider = \"openai\"\n");
+            config.push_str("model = \"gpt-4\"\n");
             
             let api_key: String = Input::with_theme(&ColorfulTheme::default())
                 .with_prompt("Enter your OpenAI API key (or press Enter to skip)")
@@ -105,7 +104,8 @@ history-size = 50
             config.push_str("default-model = \"claude-3\"\n\n");
             config.push_str("# Anthropic configuration\n");
             config.push_str("[models.claude-3]\n");
-            config.push_str("api-url = \"https://api.anthropic.com/v1/complete\"\n");
+            config.push_str("provider = \"anthropic\"\n");
+            config.push_str("model = \"claude-3-opus-20240229\"\n");
             
             let api_key: String = Input::with_theme(&ColorfulTheme::default())
                 .with_prompt("Enter your Anthropic API key (or press Enter to skip)")
@@ -124,7 +124,8 @@ history-size = 50
             config.push_str("default-model = \"gpt-4o\"\n\n");
             config.push_str("# OpenAI configuration\n");
             config.push_str("[models.gpt-4o]\n");
-            config.push_str("api-url = \"https://api.openai.com/v1/chat/completions\"\n");
+            config.push_str("provider = \"openai\"\n");
+            config.push_str("model = \"gpt-4\"\n");
             config.push_str("auth-token = \"your-openai-api-key\"\n");
             println!("You'll need to edit the config file later to add your API key.");
         }

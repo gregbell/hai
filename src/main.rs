@@ -55,8 +55,8 @@ pub struct Config {
 
 #[derive(Debug, Deserialize)]
 pub struct ModelConfig {
-    #[serde(rename = "api-url")]
-    api_url: String,
+    provider: String,
+    model: Option<String>,
     #[serde(rename = "auth-token")]
     auth_token: String,
 }
