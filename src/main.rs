@@ -58,6 +58,7 @@ impl Config {
     }
 
     /// Get the temperature value (0.0 to 1.0)
+    /// Default: 0.3 - Lower values make responses more deterministic
     pub fn temperature(&self) -> f32 {
         self.temperature.unwrap_or(0.3)
     }
@@ -405,6 +406,19 @@ mod tests {
         assert_eq!(config.default_model(), "env-model");
         env::remove_var("HAI_DEFAULT_MODEL");
         assert_eq!(config.default_model(), "default-model");
+
+        // Test default model when none is set
+        let config_no_model = Config {
+            default_model: None,
+            temperature: None,
+            shell: None,
+            history_size: None,
+            system_prompt: None,
+            max_tokens: None,
+            models: None,
+        };
+        assert_eq!(config_no_model.default_model(), "gpt-4o-mini");
+        assert_eq!(config_no_model.temperature(), 0.3);
 
         // Test SHELL override
         env::set_var("SHELL", "zsh");

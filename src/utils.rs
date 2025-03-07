@@ -23,24 +23,41 @@ pub fn create_default_config_if_not_exists() -> Result<()> {
     let config_path = config_dir.join("config.toml");
     
     if !config_path.exists() {
-        // Create a minimal default config
-        let default_config = r#"# Default model to use if --model is not specified
+        let default_config = format!(
+            r#"# Default model to use if --model is not specified
 default-model = "gpt-4o-mini"
 
-# Global settings
+# Controls randomness of responses (0.0 to 1.0)
+# Lower values make responses more deterministic
+# Higher values make responses more creative
+temperature = 0.3
+
+# Default shell for command execution
+shell = "bash"
+
+# Number of past commands to keep in history
 history-size = 50
 
+# System prompt used to guide the AI's behavior
+system-prompt = "You are a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting."
+
+# Maximum number of tokens in the AI's response
+max-tokens = 100
+
+# Model configurations
 [models.gpt-4o-mini]
 provider = "openai"
-model = "gpt-4o-mini"
-auth-token = "your-openai-api-key"
-"#;
+model = "gpt-4"
+auth-token = ""  # Add your OpenAI API key here
+
+[models.claude-3]
+provider = "anthropic"
+model = "claude-3-opus-20240229"
+auth-token = ""  # Add your Anthropic API key here
+"#
+        );
         
-        fs::write(&config_path, default_config)
-            .context("Failed to write default config")?;
-        
-        println!("Created default config file at {}", config_path.display());
-        println!("Please edit this file to add your API keys");
+        std::fs::write(config_path, default_config)?;
     }
     
     Ok(())
