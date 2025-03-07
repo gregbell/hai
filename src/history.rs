@@ -11,6 +11,7 @@ pub struct HistoryEntry {
     pub command: String,
     pub timestamp: chrono::DateTime<chrono::Utc>,
     pub executed: bool,
+    pub model: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,12 +28,13 @@ impl History {
         }
     }
     
-    pub fn add_entry(&mut self, prompt: &str, command: &str, executed: bool) {
+    pub fn add_entry(&mut self, prompt: &str, command: &str, executed: bool, model: &str) {
         let entry = HistoryEntry {
             prompt: prompt.to_string(),
             command: command.to_string(),
             timestamp: chrono::Utc::now(),
             executed,
+            model: model.to_string(),
         };
         
         self.entries.push(entry);
@@ -80,4 +82,36 @@ impl History {
 fn get_history_path() -> Result<PathBuf> {
     let config_dir = utils::ensure_config_dir()?;
     Ok(config_dir.join("history.json"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_history_add_entry() {
+        let mut history = History::new(2);
+        
+        // Add first entry
+        history.add_entry("list files", "ls -la", true, "gpt-4o-mini");
+        assert_eq!(history.entries.len(), 1);
+        assert_eq!(history.entries[0].prompt, "list files");
+        assert_eq!(history.entries[0].command, "ls -la");
+        assert_eq!(history.entries[0].executed, true);
+        assert_eq!(history.entries[0].model, "gpt-4o-mini");
+        
+        // Add second entry
+        history.add_entry("show processes", "ps aux", false, "claude-3");
+        assert_eq!(history.entries.len(), 2);
+        assert_eq!(history.entries[1].prompt, "show processes");
+        assert_eq!(history.entries[1].command, "ps aux");
+        assert_eq!(history.entries[1].executed, false);
+        assert_eq!(history.entries[1].model, "claude-3");
+        
+        // Add third entry (should remove first entry due to max_size)
+        history.add_entry("disk space", "df -h", true, "gpt-4o-mini");
+        assert_eq!(history.entries.len(), 2);
+        assert_eq!(history.entries[0].prompt, "show processes");
+        assert_eq!(history.entries[1].prompt, "disk space");
+    }
 } 

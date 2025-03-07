@@ -297,24 +297,56 @@ async fn run() -> Result<()> {
     if cli.show_history {
         let history = history::History::load()?;
         println!("Command History:");
-        println!("{:<10} {:<30} {:<50} {}", "Date", "Prompt", "Command", "Executed");
-        println!("{:-<100}", "");
+        // Column widths
+        let date_width = 10;
+        let prompt_width = 30;
+        let command_width = 40;
+        let model_width = 15;
+        let executed_width = 8;
+        let total_width = date_width + prompt_width + command_width + model_width + executed_width + 4; // 4 spaces between columns
+
+        println!("{date:<date_width$} {prompt:<prompt_width$} {command:<command_width$} {model:<model_width$} {executed}", 
+            date = "Date",
+            prompt = "Prompt",
+            command = "Command",
+            model = "Model",
+            executed = "Executed",
+            date_width = date_width,
+            prompt_width = prompt_width,
+            command_width = command_width,
+            model_width = model_width);
+        println!("{:-<total_width$}", "");
         
         for entry in history.get_entries().iter().rev() {
             let date = entry.timestamp.format("%Y-%m-%d").to_string();
-            let prompt = if entry.prompt.len() > 27 {
-                format!("{}...", &entry.prompt[..27])
+            let prompt = if entry.prompt.len() > prompt_width - 3 {
+                format!("{}...", &entry.prompt[..prompt_width - 3])
             } else {
                 entry.prompt.clone()
             };
             
-            let command = if entry.command.len() > 47 {
-                format!("{}...", &entry.command[..47])
+            let command = if entry.command.len() > command_width - 3 {
+                format!("{}...", &entry.command[..command_width - 3])
             } else {
                 entry.command.clone()
             };
+
+            let model = if entry.model.len() > model_width - 3 {
+                format!("{}...", &entry.model[..model_width - 3])
+            } else {
+                entry.model.clone()
+            };
             
-            println!("{:<10} {:<30} {:<50} {}", date, prompt, command, if entry.executed { "Yes" } else { "No" });
+            println!("{date:<date_width$} {prompt:<prompt_width$} {command:<command_width$} {model:<model_width$} {executed}",
+                date = date,
+                prompt = prompt,
+                command = command,
+                model = model,
+                executed = if entry.executed { "Yes" } else { "No" },
+                date_width = date_width,
+                prompt_width = prompt_width,
+                command_width = command_width,
+                model_width = model_width);
         }
         
         return Ok(());
@@ -335,6 +367,12 @@ async fn run() -> Result<()> {
         std::env::set_var("HAI_DEFAULT_MODEL", model);
     }
     
+    // Get the model name that will be used
+    let model_name = std::env::var("HAI_DEFAULT_MODEL")
+        .ok()
+        .or_else(|| config.default_model.clone())
+        .ok_or_else(|| anyhow::anyhow!("No model specified in config file or HAI_DEFAULT_MODEL environment variable"))?;
+    
     let command = get_command_suggestion(&prompt, &config).await?;
     
     // Clean up environment variable if we set it
@@ -352,7 +390,7 @@ async fn run() -> Result<()> {
     
     if cli.no_execute {
         // Add to history as not executed
-        history.add_entry(&prompt, &command, false);
+        history.add_entry(&prompt, &command, false, &model_name);
         history.save()?;
         return Ok(());
     }
@@ -370,10 +408,10 @@ async fn run() -> Result<()> {
         execute_command(&command, &config.shell())?;
         
         // Add to history as executed
-        history.add_entry(&prompt, &command, true);
+        history.add_entry(&prompt, &command, true, &model_name);
     } else {
         // Add to history as not executed
-        history.add_entry(&prompt, &command, false);
+        history.add_entry(&prompt, &command, false, &model_name);
     }
     
     // Save history
