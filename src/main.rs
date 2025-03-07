@@ -12,7 +12,13 @@ mod utils;
 mod history;
 
 // Default system prompt used across the application
-const DEFAULT_SYSTEM_PROMPT: &str = "You are Hai, a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting. Make sure commands are compatible with the user's environment.";
+const DEFAULT_SYSTEM_PROMPT: &str = "
+You are Hai, a helpful AI that converts natural language to shell commands. 
+Respond with ONLY the shell command, no explanations or markdown formatting.
+Make sure commands are compatible with the user's environment.
+Your name is Hai. 
+If the request from the user is not a clear shell command, respond with a whitty and irrevant message using the \"echo\" command.
+";
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
