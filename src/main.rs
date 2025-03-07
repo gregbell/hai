@@ -4,11 +4,15 @@ use dialoguer::{theme::ColorfulTheme, Confirm};
 use serde::Deserialize;
 use std::io::{self, Read};
 use std::process::Command;
+use std::collections::HashMap;
 
 mod providers;
 mod error;
 mod utils;
 mod history;
+
+// Default system prompt used across the application
+const DEFAULT_SYSTEM_PROMPT: &str = "You are Hai, a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting. Make sure commands are compatible with the user's environment.";
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -49,6 +53,20 @@ pub struct Config {
     models: Option<std::collections::HashMap<String, ModelConfig>>,
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            default_model: Some("gpt-4o-mini".to_string()),
+            temperature: Some(0.3),
+            shell: Some("bash".to_string()),
+            history_size: Some(50),
+            system_prompt: Some(DEFAULT_SYSTEM_PROMPT.to_string()),
+            max_tokens: Some(100),
+            models: Some(std::collections::HashMap::new()),
+        }
+    }
+}
+
 impl Config {
     /// Get the default model name, can be overridden by HAI_DEFAULT_MODEL env var
     pub fn default_model(&self) -> String {
@@ -78,7 +96,7 @@ impl Config {
     /// Get the system prompt for AI, including OS and shell information
     pub fn system_prompt(&self) -> String {
         let base_prompt = self.system_prompt.clone().unwrap_or_else(|| 
-            "You are a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting.".to_string()
+            DEFAULT_SYSTEM_PROMPT.to_string()
         );
 
         // Get OS information
@@ -198,6 +216,16 @@ pub struct ModelConfig {
     auth_token: String,
 }
 
+impl Default for ModelConfig {
+    fn default() -> Self {
+        Self {
+            provider: "mock".to_string(),
+            model: None,
+            auth_token: String::new(),
+        }
+    }
+}
+
 fn load_config() -> Result<Config> {
     let config_dir = utils::ensure_config_dir()?;
     let config_path = config_dir.join("config.toml");
@@ -227,8 +255,10 @@ fn get_prompt_from_stdin() -> Result<String> {
     Ok(buffer)
 }
 
-async fn get_command_suggestion(prompt: &str, config: &Config, model_name: &str) -> Result<String> {
+async fn get_command_suggestion(prompt: &str, config: &Config) -> Result<String> {
+    let model_name = config.default_model.as_deref().unwrap_or("gpt-4o-mini");
     let provider = providers::create_provider(model_name, config)?;
+    
     provider.get_command_suggestion(prompt, config.system_prompt()).await
 }
 
@@ -288,7 +318,7 @@ async fn run() -> Result<()> {
     }
     
     let model = cli.model.unwrap_or_else(|| config.default_model());
-    let command = get_command_suggestion(&prompt, &config, &model).await?;
+    let command = get_command_suggestion(&prompt, &config).await?;
     
     println!("Command: {}", command);
     
@@ -343,23 +373,31 @@ fn main() -> ! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::providers::{MockProvider, Provider};
     
     #[tokio::test]
     async fn test_get_command_suggestion() {
-        let mock_provider = MockProvider::new();
-        let prompt = "list all files";
-        let system_prompt = format!(
-            "You are a helpful AI that converts natural language to shell commands.\nOperating System: {} {}\nShell: {}\nPlease ensure all commands are compatible with this environment.",
-            std::env::consts::OS,
-            "test version",
-            "bash"
-        );
+        // Create a mock provider directly
+        use crate::providers::MockProvider;
         
-        let result = mock_provider.get_command_suggestion(prompt, system_prompt).await;
+        // Set up the config with a mock model
+        let mut config = Config::default();
+        let mut models = HashMap::new();
+        
+        let mut model_config = ModelConfig::default();
+        model_config.provider = "mock".to_string();
+        
+        models.insert("mock".to_string(), model_config);
+        config.models = Some(models);
+        config.default_model = Some("mock".to_string());
+        
+        // Test with a known prompt
+        let prompt = "list all files";
+        let result = get_command_suggestion(prompt, &config).await;
         
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "ls -la");
+        if let Ok(command) = result {
+            assert_eq!(command, "ls -la");
+        }
     }
     
     #[test]

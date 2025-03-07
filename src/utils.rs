@@ -17,34 +17,24 @@ pub fn ensure_config_dir() -> Result<PathBuf> {
     Ok(config_dir)
 }
 
+/// Returns the base configuration template
+fn get_base_config() -> String {
+    format!(r#"# Global settings
+history-size = 50
+
+# Model configurations
+"#)
+}
+
 /// Creates a default config file if it doesn't exist
 pub fn create_default_config_if_not_exists() -> Result<()> {
     let config_dir = ensure_config_dir()?;
     let config_path = config_dir.join("config.toml");
     
     if !config_path.exists() {
-        let default_config = format!(
-            r#"# Default model to use if --model is not specified
-default-model = "gpt-4o-mini"
+        let mut config = get_base_config();
+        config.push_str(r#"default-model = "gpt-4o-mini"
 
-# Controls randomness of responses (0.0 to 1.0)
-# Lower values make responses more deterministic
-# Higher values make responses more creative
-temperature = 0.3
-
-# Default shell for command execution
-shell = "bash"
-
-# Number of past commands to keep in history
-history-size = 50
-
-# System prompt used to guide the AI's behavior
-system-prompt = "You are a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting."
-
-# Maximum number of tokens in the AI's response
-max-tokens = 100
-
-# Model configurations
 [models.gpt-4o-mini]
 provider = "openai"
 model = "gpt-4o-mini"  # OpenAI's base GPT-4 model
@@ -52,12 +42,11 @@ auth-token = ""  # Add your OpenAI API key here
 
 [models.claude-3]
 provider = "anthropic"
-model = "claude-3-opus-20240229"
+model = "claude-3-7-sonnet-20250219"  # Anthropic's Claude 3 model
 auth-token = ""  # Add your Anthropic API key here
-"#
-        );
+"#);
         
-        std::fs::write(config_path, default_config)?;
+        std::fs::write(config_path, config)?;
     }
     
     Ok(())
@@ -82,11 +71,7 @@ pub fn guide_initial_setup() -> Result<()> {
         .items(&provider_options)
         .interact()?;
     
-    let mut config = String::from(r#"# Global settings
-temperature = 0.3
-history-size = 50
-
-"#);
+    let mut config = get_base_config();
     
     match provider_selection {
         0 => {
@@ -115,7 +100,7 @@ history-size = 50
             config.push_str("# Anthropic configuration\n");
             config.push_str("[models.claude-3]\n");
             config.push_str("provider = \"anthropic\"\n");
-            config.push_str("model = \"claude-3-opus-20240229\"\n");
+            config.push_str("model = \"claude-3-7-sonnet-20250219\"\n");
             
             let api_key: String = Input::with_theme(&ColorfulTheme::default())
                 .with_prompt("Enter your Anthropic API key (or press Enter to skip)")

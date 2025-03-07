@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 
 mod openai;
@@ -12,7 +12,7 @@ pub use anthropic::AnthropicProvider;
 pub use mock::MockProvider;
 
 #[async_trait]
-pub trait Provider {
+pub trait Provider: Send + Sync {
     async fn get_command_suggestion(&self, prompt: &str, system_prompt: String) -> Result<String>;
 }
 
@@ -20,37 +20,26 @@ pub fn create_provider(
     model_name: &str,
     config: &crate::Config,
 ) -> Result<Box<dyn Provider>> {
-    let models = config.models.as_ref().context("No models configured")?;
-    let model_config = models.get(model_name).context(format!("Model '{}' not found in config", model_name))?;
-    
-    // Determine provider based on the provider field
+    let model_config = config
+        .models
+        .as_ref()
+        .and_then(|models| models.get(model_name))
+        .ok_or_else(|| anyhow!("Model '{}' not found in config", model_name))?;
+
+    let model = model_config.model.clone().unwrap_or_else(|| model_name.to_string());
+    let auth_token = model_config.auth_token.clone();
+
     match model_config.provider.as_str() {
-        "openai" => {
-            let api_url = "https://api.openai.com/v1/chat/completions".to_string();
-            let model = model_config.model.clone().unwrap_or_else(|| model_name.to_string());
-            let auth_token = config.get_provider_auth_token("openai", model_config);
-            
-            Ok(Box::new(OpenAIProvider::new(
-                api_url,
-                auth_token,
-                model,
-                config.temperature(),
-                config.max_tokens(),
-            )))
-        },
-        "anthropic" => {
-            let api_url = "https://api.anthropic.com/v1/complete".to_string();
-            let model = model_config.model.clone().unwrap_or_else(|| model_name.to_string());
-            let auth_token = config.get_provider_auth_token("anthropic", model_config);
-            
-            Ok(Box::new(AnthropicProvider::new(
-                api_url,
-                auth_token,
-                model,
-                config.temperature(),
-                config.max_tokens(),
-            )))
-        },
-        provider => Err(anyhow::anyhow!("Unsupported provider: {}", provider)),
+        "openai" => Ok(Box::new(OpenAIProvider::new(
+            model,
+            auth_token,
+        ))),
+        "anthropic" => Ok(Box::new(AnthropicProvider::new(
+            model,
+            auth_token,
+        ))),
+        #[cfg(test)]
+        "mock" => Ok(Box::new(MockProvider::new())),
+        _ => Err(anyhow!("Unknown provider: {}", model_config.provider)),
     }
 } 
