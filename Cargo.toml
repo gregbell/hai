@@ -5,6 +5,30 @@ edition = "2021"
 description = "~ tiny CLI tool that turns natural language into Bash or Zsh commands"
 authors = ["Greg Bell <code@gregbell.ca>"]
 license = "GPL-3.0"
+documentation = "https://github.com/gregbell/hai/tree/main/doc"
+readme = "README.md"
+repository = "https://github.com/gregbell/hai"
+keywords = ["cli", "ai", "shell", "assistant", "natural-language"]
+categories = ["command-line-utilities", "development-tools"]
+
+[package.metadata.deb]
+maintainer = "Greg Bell <code@gregbell.ca>"
+copyright = "2024, Greg Bell <code@gregbell.ca>"
+license-file = ["LICENSE", "0"]
+extended-description = """
+A command-line utility that converts natural language prompts into shell commands using AI.
+It provides an intuitive interface for users who know what they want to accomplish but aren't sure about the exact command syntax.
+"""
+depends = "$auto"
+section = "utils"
+priority = "optional"
+assets = [
+    ["target/release/hai", "usr/bin/", "755"],
+    ["doc/manual.md", "usr/share/doc/hai/", "644"],
+    ["doc/config.md", "usr/share/doc/hai/", "644"],
+    ["man/man1/hai.1", "usr/share/man/man1/", "644"],
+    ["man/man5/hai-config.5", "usr/share/man/man5/", "644"],
+]
 
 [dependencies]
 clap = { version = "4.4", features = ["derive"] }
@@ -20,3 +44,6 @@ async-trait = "0.1"
 log = "0.4"
 env_logger = "0.10"
 chrono = { version = "0.4", features = ["serde"] }
+
+[build-dependencies]
+cargo-deb = "2.0"

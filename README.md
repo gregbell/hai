@@ -23,8 +23,11 @@ Command: pandoc -f markdown -t epub -o book.epub *.md
 
 2. Build and install:
    ```bash
-   cargo build --release
-   sudo cp target/release/hai /usr/local/bin/
+   # Build and install to /usr/local/bin (may require sudo)
+   make local-install
+   
+   # Or for a system-wide installation
+   sudo make install
    ```
 
 3. Run hai for the first time to set up your configuration:
@@ -204,10 +207,53 @@ useful for:
 
 ## Development
 
-For development purposes, there are some helper scripts in the `bin` directory:
+### Building
 
-- `bin/release.sh`: Creates a release tarball
-- `bin/install.sh`: Installs the application locally
+hai uses a Makefile system for building, testing, and installation:
+
+```bash
+# Build the application and documentation
+make
+
+# Run tests
+make test
+
+# Build only the documentation
+make doc
+
+# Clean build artifacts
+make clean
+```
+
+### Creating a Release
+
+To create a release tarball:
+
+```bash
+make release VERSION=0.1.0
+```
+
+This will:
+1. Update the version in Cargo.toml
+2. Build the application
+3. Create a release tarball with the binary, documentation, and man pages
+4. Output instructions for creating a git tag
+
+### Man Pages
+
+hai includes comprehensive man pages for both the command and its configuration file:
+
+```bash
+# After installation
+man hai
+man hai-config
+
+# During development (after building documentation)
+man -l man/man1/hai.1
+man -l man/man5/hai-config.5
+```
+
+The man pages are maintained in Markdown format in the `doc` directory and converted to man pages using pandoc.
 
 ## Contributing
 
@@ -218,9 +264,9 @@ hai is written in Rust. To build from source:
 ```bash
 git clone https://github.com/gregbell/hai.git
 cd hai
-cargo build --release
+make
 ```
 
 ## License
 
-This project is Copyright 2025 Greg Bell and licensed under the GPL-3.0. See [LICENSE](LICENSE).
+This project is Copyright 2024 Greg Bell and licensed under the GPL-3.0. See [LICENSE](LICENSE).
