@@ -12,6 +12,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Build
-        run: make
+        run: make build
       - name: Run tests
         run: make test
