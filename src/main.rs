@@ -501,9 +501,16 @@ mod tests {
 
     #[test]
     fn test_load_config() {
+        // Set environment variable to skip interactive setup
+        std::env::set_var("HAI_SKIP_SETUP", "1");
+
         // This is a basic test that just ensures the function doesn't panic
         // In a real test, we would create a temporary config file and test reading from it
         let result = load_config();
+
+        // Clean up environment variable
+        std::env::remove_var("HAI_SKIP_SETUP");
+
         assert!(result.is_ok());
     }
 

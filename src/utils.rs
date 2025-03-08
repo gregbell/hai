@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use dialoguer::{theme::ColorfulTheme, Input, Select};
+use std::env;
 use std::fs;
 use std::path::PathBuf;
 
@@ -62,6 +63,11 @@ pub fn guide_initial_setup() -> Result<()> {
 
     if config_path.exists() {
         return Ok(());
+    }
+
+    // Skip interactive setup if HAI_SKIP_SETUP is set (useful for tests)
+    if env::var("HAI_SKIP_SETUP").is_ok() {
+        return create_default_config_if_not_exists();
     }
 
     println!("Welcome to hai! Let's set up your configuration.");

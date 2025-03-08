@@ -14,4 +14,6 @@ jobs:
       - name: Build
         run: make build
       - name: Run tests
+        env:
+          HAI_SKIP_SETUP: 1
         run: make test
