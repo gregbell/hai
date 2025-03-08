@@ -4,11 +4,10 @@ Meet **hai**, a tiny CLI tool that turns natural language into Bash or Zsh
 commands. You describe what you want to do, hai suggests a command, and asks if
 you'd like to run it. A simple, unix-y tool that does one thing /really/ well.
 
-
-```bash
-$> hai "use pandoc to convert all the markdown files in this directory to an ebook"
+```console
+$ hai "use pandoc to convert all the markdown files in this directory to an ebook"
 Command: pandoc -f markdown -t epub -o book.epub *.md
-✔ Looks good? · yes
+✔ Looks good?
 ```
 
 ## Installation
@@ -16,25 +15,28 @@ Command: pandoc -f markdown -t epub -o book.epub *.md
 ### From Source
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/gregbell/hai.git
    cd hai
    ```
 
 2. Build and install:
+
    ```bash
    # Build and install to /usr/local/bin (may require sudo)
    make local-install
-   
+
    # Or for a system-wide installation
    sudo make install
    ```
 
 3. Run hai for the first time to set up your configuration:
+
    ```bash
    hai
    ```
-   
+
    This will guide you through setting up your configuration and API keys.
 
 ### From Package Managers
@@ -46,10 +48,10 @@ Coming soon!
 Just describe what you want:
 
 ```bash
-hai copy all txt files to the backup directory
+hai "copy all txt files to the backup directory"
 ```
 
-Or pipe stuff into it:
+Or pipe stuff into it `hai`:
 
 ```bash
 cat some-file | hai
@@ -64,62 +66,26 @@ cat some-file | hai
 - `-v`, `--version`: Show the version.
 - `-h`, `--help`: Show help.
 
-## Command History
-
-hai keeps track of your command history. You can view your command history with:
-
-```bash
-hai --history
-```
-
-This will display a table of your past commands, including:
-- The date the command was run
-- The prompt you used
-- The command that was generated
-- Whether the command was executed
-
-The history is stored in `~/.config/hai/history.json`. You can configure the
-maximum number of commands to keep in history by setting the `history-size`
-option in your config file.
-
 ## More examples
 
-```bash
-hai find and delete all log files
-```
-
-```
+```console
+$ hai "find and delete all log files"
 Command: find . -name "*.log" -delete
-Looks good? Y/n
 ```
 
-```bash
-hai list all running docker containers
-```
-
-```
+```console
+hai "list all running docker containers"
 Command: docker ps
-Looks good? Y/n
 ```
 
-### Multi-command examples
-
-```bash
-hai find all jpg files and resize them to 800px wide
-```
-
-```
+```console
+$ hai "find all jpg files and resize them to 800px wide"
 Command: find . -name "*.jpg" -print0 | xargs -0 mogrify -resize 800x
-Looks good? Y/n
 ```
 
-```bash
-hai search all markdown files for TODO and save the results to todos.txt
-```
-
-```
+```console
+$ hai "search all markdown files for TODO and save the results to todos.txt"
 Command: grep -r "TODO" *.md > todos.txt
-Looks good? Y/n
 ```
 
 ## Configuration
@@ -176,6 +142,7 @@ auth-token = ""
 ### Model Configuration
 
 Each model in the `[models]` section requires:
+
 - `provider`: The AI provider to use (currently supported: "openai" or
   "anthropic")
 - `auth-token`: Your API authentication token for the provider
@@ -201,9 +168,29 @@ You can use environment variables to override configuration values:
 
 Environment variables take precedence over values in the config file. This is
 useful for:
+
 - Temporarily switching models: `HAI_DEFAULT_MODEL=claude-3 hai "list files"`
 - Using different API keys: `HAI_OPENAI_TOKEN=sk-... hai "list files"`
 - Running with a different shell: `SHELL=zsh hai "list files"`
+
+## Command History
+
+hai keeps track of your command history. You can view your command history with:
+
+```bash
+hai --history
+```
+
+This will display a table of your past commands, including:
+
+- The date the command was run
+- The prompt you used
+- The command that was generated
+- Whether the command was executed
+
+The history is stored in `~/.config/hai/history.json`. You can configure the
+maximum number of commands to keep in history by setting the `history-size`
+option in your config file.
 
 ## Development
 
@@ -234,6 +221,7 @@ make release VERSION=0.1.0
 ```
 
 This will:
+
 1. Update the version in Cargo.toml
 2. Build the application
 3. Create a release tarball with the binary, documentation, and man pages
