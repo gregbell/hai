@@ -55,9 +55,13 @@ local-uninstall:
 
 # Create a Debian package
 deb: build doc
+	# Ensure man pages are built before packaging
+	mkdir -p man/man1 man/man5
+	$(MAKE) -C doc
+	# Build the Debian package with all documentation
 	cargo deb
 
-# Create a release tarball
+# Create a release tarball and Debian package
 # Usage: make release VERSION=0.1.0
 release:
 	@if [ -z "$(VERSION)" ]; then \
@@ -83,7 +87,14 @@ release:
 	cp -r doc release/hai-$(VERSION)/
 	# Create a tarball
 	cd release && tar -czf hai-$(VERSION).tar.gz hai-$(VERSION)
+	# Build Debian package
+	$(MAKE) deb
+	# Copy the Debian package to the release directory
+	mkdir -p release/hai-$(VERSION)/deb
+	cp target/debian/hai_$(VERSION)*.deb release/hai-$(VERSION)/deb/
+	cp target/debian/hai_$(VERSION)*.deb release/
 	@echo "Release created: release/hai-$(VERSION).tar.gz"
+	@echo "Debian package: release/hai_$(VERSION)*.deb"
 	@echo "Don't forget to commit the version change and create a git tag:"
 	@echo "git commit -am \"Bump version to $(VERSION)\""
 	@echo "git tag v$(VERSION)"
@@ -101,8 +112,8 @@ help:
 	@echo "  local-install    - Install the application to /usr/local/bin"
 	@echo "  uninstall        - Remove the application and documentation from system directories"
 	@echo "  local-uninstall  - Remove the application from /usr/local/bin"
-	@echo "  deb              - Create a Debian package"
-	@echo "  release          - Create a release tarball (Usage: make release VERSION=x.y.z)"
+	@echo "  deb              - Create a Debian package with documentation"
+	@echo "  release          - Create a release tarball and Debian package (Usage: make release VERSION=x.y.z)"
 	@echo "  help             - Show this help message"
 	@echo
 	@echo "Documentation targets (run with make -C doc):"
