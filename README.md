@@ -74,7 +74,7 @@ Command: find . -name "*.log" -delete
 ```
 
 ```console
-hai "list all running docker containers"
+$ hai "list all running docker containers"
 Command: docker ps
 ```
 
