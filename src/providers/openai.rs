@@ -83,10 +83,7 @@ impl Provider for OpenAIProvider {
 
         if !response.status().is_success() {
             let error_text = response.text().await?;
-            return Err(anyhow::anyhow!(
-                "OpenAI API error: {}",
-                error_text
-            ));
+            return Err(anyhow::anyhow!("OpenAI API error: {}", error_text));
         }
 
         let response: OpenAIResponse = response
@@ -96,4 +93,4 @@ impl Provider for OpenAIProvider {
 
         Ok(response.choices[0].message.content.clone())
     }
-} 
+}

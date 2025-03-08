@@ -53,12 +53,10 @@ impl Provider for AnthropicProvider {
         let request = AnthropicRequest {
             model: self.model.clone(),
             max_tokens: 100,
-            messages: vec![
-                Message {
-                    role: "user".to_string(),
-                    content: prompt.to_string(),
-                },
-            ],
+            messages: vec![Message {
+                role: "user".to_string(),
+                content: prompt.to_string(),
+            }],
             system: system_prompt,
         };
 
@@ -75,10 +73,7 @@ impl Provider for AnthropicProvider {
 
         if !response.status().is_success() {
             let error_text = response.text().await?;
-            return Err(anyhow::anyhow!(
-                "Anthropic API error: {}",
-                error_text
-            ));
+            return Err(anyhow::anyhow!("Anthropic API error: {}", error_text));
         }
 
         let response: AnthropicResponse = response
@@ -88,4 +83,4 @@ impl Provider for AnthropicProvider {
 
         Ok(response.content[0].text.clone())
     }
-} 
+}

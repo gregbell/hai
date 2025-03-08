@@ -11,10 +11,7 @@ pub struct MockProvider {
 impl MockProvider {
     pub fn new() -> Self {
         let mut responses = HashMap::new();
-        responses.insert(
-            "list all files".to_string(),
-            "ls -la".to_string(),
-        );
+        responses.insert("list all files".to_string(), "ls -la".to_string());
         responses.insert(
             "find all text files".to_string(),
             "find . -name \"*.txt\"".to_string(),
@@ -34,8 +31,8 @@ impl Provider for MockProvider {
         if let Some(response) = self.responses.get(prompt) {
             return Ok(response.clone());
         }
-        
+
         // If no exact match, return a default response
         Ok("echo \"Command not found for this prompt\"".to_string())
     }
-} 
+}

@@ -5,10 +5,10 @@ use serde::Deserialize;
 use std::io::{self, Read};
 use std::process::Command;
 
-mod providers;
 mod error;
-mod utils;
 mod history;
+mod providers;
+mod utils;
 
 // Default system prompt used across the application
 const DEFAULT_SYSTEM_PROMPT: &str = "
@@ -37,7 +37,7 @@ struct Cli {
     /// Select the model to use
     #[arg(short = 'm', long)]
     model: Option<String>,
-    
+
     /// Show command history
     #[arg(short = 'H', long = "history")]
     show_history: bool,
@@ -75,9 +75,11 @@ impl Default for Config {
 impl Config {
     /// Get the default model name, can be overridden by HAI_DEFAULT_MODEL env var
     pub fn default_model(&self) -> String {
-        std::env::var("HAI_DEFAULT_MODEL")
-            .ok()
-            .unwrap_or_else(|| self.default_model.clone().unwrap_or_else(|| "gpt-4o-mini".to_string()))
+        std::env::var("HAI_DEFAULT_MODEL").ok().unwrap_or_else(|| {
+            self.default_model
+                .clone()
+                .unwrap_or_else(|| "gpt-4o-mini".to_string())
+        })
     }
 
     /// Get the temperature value (0.0 to 1.0)
@@ -100,9 +102,10 @@ impl Config {
 
     /// Get the system prompt for AI, including OS and shell information
     pub fn system_prompt(&self) -> String {
-        let base_prompt = self.system_prompt.clone().unwrap_or_else(|| 
-            DEFAULT_SYSTEM_PROMPT.to_string()
-        );
+        let base_prompt = self
+            .system_prompt
+            .clone()
+            .unwrap_or_else(|| DEFAULT_SYSTEM_PROMPT.to_string());
 
         // Get OS information
         let os_name = std::env::consts::OS;
@@ -147,49 +150,68 @@ fn get_os_version() -> String {
             // Try reading from /etc/os-release first (most Linux distributions)
             if let Ok(content) = std::fs::read_to_string("/etc/os-release") {
                 // First try PRETTY_NAME for more descriptive version
-                if let Some(version) = content.lines()
+                if let Some(version) = content
+                    .lines()
                     .find(|line| line.starts_with("PRETTY_NAME="))
-                    .map(|line| line.trim_start_matches("PRETTY_NAME=").trim_matches('"').to_string())
+                    .map(|line| {
+                        line.trim_start_matches("PRETTY_NAME=")
+                            .trim_matches('"')
+                            .to_string()
+                    })
                 {
                     return version;
                 }
-                
+
                 // Then try VERSION_ID for distributions that have it
-                if let Some(version) = content.lines()
+                if let Some(version) = content
+                    .lines()
                     .find(|line| line.starts_with("VERSION_ID="))
-                    .map(|line| line.trim_start_matches("VERSION_ID=").trim_matches('"').to_string())
+                    .map(|line| {
+                        line.trim_start_matches("VERSION_ID=")
+                            .trim_matches('"')
+                            .to_string()
+                    })
                 {
                     return version;
                 }
-                
+
                 // For rolling releases like Arch, use NAME
-                if let Some(version) = content.lines()
-                    .find(|line| line.starts_with("NAME="))
-                    .map(|line| line.trim_start_matches("NAME=").trim_matches('"').to_string())
+                if let Some(version) =
+                    content
+                        .lines()
+                        .find(|line| line.starts_with("NAME="))
+                        .map(|line| {
+                            line.trim_start_matches("NAME=")
+                                .trim_matches('"')
+                                .to_string()
+                        })
                 {
                     return version;
                 }
             }
-            
+
             // Fallback to uname if os-release is not available or readable
             if let Ok(output) = std::process::Command::new("uname").arg("-r").output() {
                 if let Ok(version) = String::from_utf8(output.stdout) {
                     return version.trim().to_string();
                 }
             }
-            
+
             "unknown version".to_string()
-        },
+        }
         "macos" => {
             // Use sw_vers command on macOS
-            if let Ok(output) = std::process::Command::new("sw_vers").arg("-productVersion").output() {
+            if let Ok(output) = std::process::Command::new("sw_vers")
+                .arg("-productVersion")
+                .output()
+            {
                 if let Ok(version) = String::from_utf8(output.stdout) {
                     return version.trim().to_string();
                 }
             }
-            
+
             "unknown version".to_string()
-        },
+        }
         "windows" => {
             // Use PowerShell to get Windows version
             let args = [
@@ -197,7 +219,7 @@ fn get_os_version() -> String {
                 "-Command",
                 "[System.Environment]::OSVersion.Version.ToString()",
             ];
-            
+
             if let Ok(output) = std::process::Command::new("powershell")
                 .args(&args)
                 .output()
@@ -206,9 +228,9 @@ fn get_os_version() -> String {
                     return version.trim().to_string();
                 }
             }
-            
+
             "unknown version".to_string()
-        },
+        }
         _ => "unknown version".to_string(),
     }
 }
@@ -234,23 +256,21 @@ impl Default for ModelConfig {
 fn load_config() -> Result<Config> {
     let config_dir = utils::ensure_config_dir()?;
     let config_path = config_dir.join("config.toml");
-    
+
     if !config_path.exists() {
         // Guide the user through initial setup
         utils::guide_initial_setup()?;
-        
+
         // If we still don't have a config file, create a default one
         if !config_path.exists() {
             utils::create_default_config_if_not_exists()?;
         }
     }
-    
-    let config_str = std::fs::read_to_string(config_path)
-        .context("Failed to read config file")?;
-    
-    let config: Config = toml::from_str(&config_str)
-        .context("Failed to parse config file")?;
-    
+
+    let config_str = std::fs::read_to_string(config_path).context("Failed to read config file")?;
+
+    let config: Config = toml::from_str(&config_str).context("Failed to parse config file")?;
+
     Ok(config)
 }
 
@@ -269,10 +289,16 @@ async fn get_command_suggestion(prompt: &str, config: &Config) -> Result<String>
     let provider_name = std::env::var("HAI_DEFAULT_MODEL")
         .ok()
         .or_else(|| config.default_model.clone())
-        .ok_or_else(|| anyhow::anyhow!("No model specified in config file or HAI_DEFAULT_MODEL environment variable"))?;
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "No model specified in config file or HAI_DEFAULT_MODEL environment variable"
+            )
+        })?;
 
     let provider = providers::create_provider(&provider_name, config)?;
-    provider.get_command_suggestion(prompt, config.system_prompt()).await
+    provider
+        .get_command_suggestion(prompt, config.system_prompt())
+        .await
 }
 
 fn execute_command(command: &str, shell: &str) -> Result<()> {
@@ -281,18 +307,21 @@ fn execute_command(command: &str, shell: &str) -> Result<()> {
         .arg(command)
         .status()
         .context("Failed to execute command")?;
-    
+
     if !status.success() {
-        return Err(anyhow::anyhow!("Command exited with non-zero status: {}", status));
+        return Err(anyhow::anyhow!(
+            "Command exited with non-zero status: {}",
+            status
+        ));
     }
-    
+
     Ok(())
 }
 
 async fn run() -> Result<()> {
     let cli = Cli::parse();
     let config = load_config()?;
-    
+
     // Handle history command
     if cli.show_history {
         let history = history::History::load()?;
@@ -303,7 +332,8 @@ async fn run() -> Result<()> {
         let command_width = 40;
         let model_width = 15;
         let executed_width = 8;
-        let total_width = date_width + prompt_width + command_width + model_width + executed_width + 4; // 4 spaces between columns
+        let total_width =
+            date_width + prompt_width + command_width + model_width + executed_width + 4; // 4 spaces between columns
 
         println!("{date:<date_width$} {prompt:<prompt_width$} {command:<command_width$} {model:<model_width$} {executed}", 
             date = "Date",
@@ -316,7 +346,7 @@ async fn run() -> Result<()> {
             command_width = command_width,
             model_width = model_width);
         println!("{:-<total_width$}", "");
-        
+
         for entry in history.get_entries().iter().rev() {
             let date = entry.timestamp.format("%Y-%m-%d").to_string();
             let prompt = if entry.prompt.len() > prompt_width - 3 {
@@ -324,7 +354,7 @@ async fn run() -> Result<()> {
             } else {
                 entry.prompt.clone()
             };
-            
+
             let command = if entry.command.len() > command_width - 3 {
                 format!("{}...", &entry.command[..command_width - 3])
             } else {
@@ -336,7 +366,7 @@ async fn run() -> Result<()> {
             } else {
                 entry.model.clone()
             };
-            
+
             println!("{date:<date_width$} {prompt:<prompt_width$} {command:<command_width$} {model:<model_width$} {executed}",
                 date = date,
                 prompt = prompt,
@@ -348,16 +378,16 @@ async fn run() -> Result<()> {
                 command_width = command_width,
                 model_width = model_width);
         }
-        
+
         return Ok(());
     }
-    
+
     let prompt = if cli.prompt.is_empty() {
         get_prompt_from_stdin()?
     } else {
         cli.prompt
     };
-    
+
     if prompt.trim().is_empty() {
         return Err(anyhow::anyhow!("No prompt provided"));
     }
@@ -366,35 +396,39 @@ async fn run() -> Result<()> {
     if let Some(model) = &cli.model {
         std::env::set_var("HAI_DEFAULT_MODEL", model);
     }
-    
+
     // Get the model name that will be used
     let model_name = std::env::var("HAI_DEFAULT_MODEL")
         .ok()
         .or_else(|| config.default_model.clone())
-        .ok_or_else(|| anyhow::anyhow!("No model specified in config file or HAI_DEFAULT_MODEL environment variable"))?;
-    
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "No model specified in config file or HAI_DEFAULT_MODEL environment variable"
+            )
+        })?;
+
     let command = get_command_suggestion(&prompt, &config).await?;
-    
+
     // Clean up environment variable if we set it
     if cli.model.is_some() {
         std::env::remove_var("HAI_DEFAULT_MODEL");
     }
-    
+
     println!("Command: {}", command);
-    
+
     // Load history with the configured history size
     let mut history = match history::History::load() {
         Ok(h) => h,
         Err(_) => history::History::new(config.history_size()),
     };
-    
+
     if cli.no_execute {
         // Add to history as not executed
         history.add_entry(&prompt, &command, false, &model_name);
         history.save()?;
         return Ok(());
     }
-    
+
     let should_execute = if cli.yes {
         true
     } else {
@@ -403,20 +437,20 @@ async fn run() -> Result<()> {
             .default(true)
             .interact()?
     };
-    
+
     if should_execute {
         execute_command(&command, &config.shell())?;
-        
+
         // Add to history as executed
         history.add_entry(&prompt, &command, true, &model_name);
     } else {
         // Add to history as not executed
         history.add_entry(&prompt, &command, false, &model_name);
     }
-    
+
     // Save history
     history.save()?;
-    
+
     Ok(())
 }
 
@@ -441,30 +475,30 @@ mod tests {
         // Set up the config with a mock model
         let mut config = Config::default();
         let mut models = HashMap::new();
-        
+
         let mut model_config = ModelConfig::default();
         model_config.provider = "mock".to_string();
-        
+
         models.insert("mock".to_string(), model_config);
         config.models = Some(models);
         config.default_model = Some("mock".to_string());
-        
+
         // Override environment variable for testing
         env::set_var("HAI_DEFAULT_MODEL", "mock");
-        
+
         // Test with a known prompt
         let prompt = "list all files";
         let result = get_command_suggestion(prompt, &config).await;
-        
+
         // Clean up
         env::remove_var("HAI_DEFAULT_MODEL");
-        
+
         assert!(result.is_ok());
         if let Ok(command) = result {
             assert_eq!(command, "ls -la");
         }
     }
-    
+
     #[test]
     fn test_load_config() {
         // This is a basic test that just ensures the function doesn't panic
@@ -472,18 +506,18 @@ mod tests {
         let result = load_config();
         assert!(result.is_ok());
     }
-    
+
     #[test]
     fn test_get_prompt_from_stdin() {
         // This is hard to test without mocking stdin, so we'll skip for now
     }
-    
+
     #[test]
     fn test_execute_command() {
         // Test with a simple command that should always succeed
         let result = execute_command("echo test", "bash");
         assert!(result.is_ok());
-        
+
         // Test with a command that should fail
         let result = execute_command("exit 1", "bash");
         assert!(result.is_err());
@@ -492,7 +526,7 @@ mod tests {
     #[test]
     fn test_config_environment_variables() {
         use std::env;
-        
+
         // Set up a test config
         let config = Config {
             default_model: Some("default-model".to_string()),
@@ -537,9 +571,15 @@ mod tests {
         };
 
         env::set_var("HAI_OPENAI_TOKEN", "env-token");
-        assert_eq!(config.get_provider_auth_token("openai", &model_config), "env-token");
+        assert_eq!(
+            config.get_provider_auth_token("openai", &model_config),
+            "env-token"
+        );
         env::remove_var("HAI_OPENAI_TOKEN");
-        assert_eq!(config.get_provider_auth_token("openai", &model_config), "config-token");
+        assert_eq!(
+            config.get_provider_auth_token("openai", &model_config),
+            "config-token"
+        );
     }
 
     #[test]
@@ -547,10 +587,19 @@ mod tests {
         let version = get_os_version();
         assert!(!version.is_empty(), "OS version should not be empty");
         assert_ne!(version, "unknown version", "OS version should be detected");
-        
+
         // Test that the version string doesn't contain any unwanted characters
-        assert!(!version.contains('\0'), "Version should not contain null bytes");
-        assert!(!version.contains('\n'), "Version should not contain newlines");
-        assert!(!version.contains('\r'), "Version should not contain carriage returns");
+        assert!(
+            !version.contains('\0'),
+            "Version should not contain null bytes"
+        );
+        assert!(
+            !version.contains('\n'),
+            "Version should not contain newlines"
+        );
+        assert!(
+            !version.contains('\r'),
+            "Version should not contain carriage returns"
+        );
     }
 }
