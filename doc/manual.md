@@ -82,8 +82,8 @@ Display command history:
     $ hai --history
     Date       Prompt                         Command                        Model      Executed
     --------------------------------------------------------------------------------------
-    2024-03-07 find files modified today      find . -type f -mtime -1       gpt-4      Yes
-    2024-03-06 check disk space               df -h                          claude-3   No
+    2025-03-07 find files modified today      find . -type f -mtime -1       gpt-4      Yes
+    2025-03-06 check disk space               df -h                          claude-3   No
 
 Use a specific model:
 
@@ -116,7 +116,7 @@ Written by Greg Bell <code@gregbell.ca>
 
 # COPYRIGHT
 
-Copyright © 2024 Greg Bell. License GPLv3+: GNU GPL version 3 or later
+Copyright © 2025 Greg Bell. License GPLv3+: GNU GPL version 3 or later
 <https://gnu.org/licenses/gpl.html>. This is free software: you are free to
 change and redistribute it. There is NO WARRANTY, to the extent permitted by
 law.

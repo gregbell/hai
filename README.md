@@ -269,4 +269,4 @@ make
 
 ## License
 
-This project is Copyright 2024 Greg Bell and licensed under the GPL-3.0. See [LICENSE](LICENSE).
+This project is Copyright 2025 Greg Bell and licensed under the GPL-3.0. See [LICENSE](LICENSE).

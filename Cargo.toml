@@ -13,7 +13,7 @@ categories = ["command-line-utilities", "development-tools"]
 
 [package.metadata.deb]
 maintainer = "Greg Bell <code@gregbell.ca>"
-copyright = "2024, Greg Bell <code@gregbell.ca>"
+copyright = "2025, Greg Bell <code@gregbell.ca>"
 license-file = ["LICENSE", "0"]
 extended-description = """
 A command-line utility that converts natural language prompts into shell commands using AI.
