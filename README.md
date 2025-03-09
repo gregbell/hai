@@ -4,6 +4,8 @@ Meet **hai**, a tiny CLI tool that turns natural language into Bash or Zsh
 commands. You describe what you want to do, hai suggests a command, and asks if
 you'd like to run it. A simple, unix-y tool that does one thing /really/ well.
 
+![Hai creating a compressed tarball](assets/tarball.gif)
+
 ```console
 $ hai "use pandoc to convert all the markdown files in this directory to an ebook"
 Command: pandoc -f markdown -t epub -o book.epub *.md
