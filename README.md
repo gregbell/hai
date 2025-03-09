@@ -24,6 +24,8 @@ Or pipe stuff into it `hai`:
 cat some-file | hai
 ```
 
+Some more examples:
+
 ```console
 $ hai "find and delete all log files"
 Command: find . -name "*.log" -delete
@@ -78,36 +80,19 @@ Full documentation is available in the man pages:
    hai
    ```
 
-   This will guide you through setting up your configuration and API keys.
+This will guide you through setting up your configuration and API keys.
 
 ### From Package Managers
 
 Coming soon!
 
-## Configuration
-
-## Command History
-
-hai keeps track of your command history. You can view your command history with:
-
-```bash
-hai --history
-```
-
-This will display a table of your past commands, including:
-
-- The date the command was run
-- The prompt you used
-- The command that was generated
-- Whether the command was executed
-
-The history is stored in `~/.config/hai/history.json`. You can configure the
-maximum number of commands to keep in history by setting the `history-size`
-option in your config file.
-
 ## Contributing
 
-Open an issue or PR if you've got ideas or fixes. We'd love to see them.
+We would love your help with Hai! If you want to discuss Hai, The best place
+is the Github discussions: https://github.com/gregbell/hai/discussions.
+
+If you run into a bug or want to contribute with code, open an issue or PR. We'd
+love to see them.
 
 hai is written in Rust. To build from source:
 
