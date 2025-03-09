@@ -1,0 +1,125 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build_and_release:
+    name: Build and Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pandoc
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build release
+        run: make release VERSION=$VERSION
+
+      - name: Prepare release assets
+        run: |
+          # Create directory for renamed assets
+          mkdir -p release/renamed
+
+          # Copy and rename the binary with architecture info
+          cp release/hai-$VERSION/hai release/renamed/hai-$VERSION-linux-amd64
+
+          # Copy the tarball with architecture info
+          cp release/hai-$VERSION.tar.gz release/renamed/hai-$VERSION-linux-amd64.tar.gz
+
+          # Copy the Debian package (already has architecture in filename)
+          cp release/hai_$VERSION*.deb release/renamed/
+
+      - name: Extract changelog
+        id: changelog
+        run: |
+          # Extract the relevant section from CHANGELOG.md
+          # This assumes a format with ## [version] headers
+          VERSION_SECTION=$(awk -v ver="$VERSION" '
+            BEGIN { found=0; printing=0; }
+            /^## \['"$VERSION"'\]/ { found=1; printing=1; next; }
+            /^## \[/ { if (printing) { exit; } }
+            printing { print; }
+            END { if (!found) { print "No specific changelog entry found for version '"$VERSION"'"; } }
+          ' CHANGELOG.md)
+
+          # If no specific version section is found, use the Unreleased section
+          if [ -z "$VERSION_SECTION" ]; then
+            VERSION_SECTION=$(awk '
+              BEGIN { found=0; printing=0; }
+              /^## \[Unreleased\]/ { found=1; printing=1; next; }
+              /^## \[/ { if (printing) { exit; } }
+              printing { print; }
+              END { if (!found) { print "No changelog entry found"; } }
+            ' CHANGELOG.md)
+          fi
+
+          # Save changelog to output
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$VERSION_SECTION" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          # Get the Debian package filename
+          DEB_FILENAME=$(ls release/hai_$VERSION*.deb | xargs basename)
+          echo "DEB_FILENAME=$DEB_FILENAME" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release v${{ env.VERSION }}
+          body: |
+            # Release v${{ env.VERSION }}
+
+            ${{ env.CHANGELOG }}
+
+            ## Downloads
+
+            | File | Description |
+            |------|-------------|
+            | [hai-${{ env.VERSION }}-linux-amd64.tar.gz](https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/hai-${{ env.VERSION }}-linux-amd64.tar.gz) | Linux (x86_64) tarball |
+            | [hai-${{ env.VERSION }}-linux-amd64](https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/hai-${{ env.VERSION }}-linux-amd64) | Linux (x86_64) binary |
+            | [${{ env.DEB_FILENAME }}](https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/${{ env.DEB_FILENAME }}) | Debian/Ubuntu (x86_64) package |
+
+            ## Installation
+
+            ### Debian/Ubuntu
+            ```
+            sudo dpkg -i ${{ env.DEB_FILENAME }}
+            ```
+
+            ### Manual Installation (Linux x86_64)
+            Download the binary, make it executable, and move it to a directory in your PATH:
+            ```
+            chmod +x hai-${{ env.VERSION }}-linux-amd64
+            sudo mv hai-${{ env.VERSION }}-linux-amd64 /usr/local/bin/hai
+            ```
+
+            Or extract from the tarball:
+            ```
+            tar -xzf hai-${{ env.VERSION }}-linux-amd64.tar.gz
+            cd hai-${{ env.VERSION }}
+            sudo make local-install
+            ```
+          files: |
+            release/renamed/hai-${{ env.VERSION }}-linux-amd64.tar.gz
+            release/renamed/hai-${{ env.VERSION }}-linux-amd64
+            release/renamed/hai_${{ env.VERSION }}*.deb
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
