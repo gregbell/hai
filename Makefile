@@ -100,10 +100,6 @@ release:
 	cp target/debian/hai_$(VERSION)*.deb release/
 	@echo "Release created: release/hai-$(VERSION).tar.gz"
 	@echo "Debian package: release/hai_$(VERSION)*.deb"
-	@echo "Don't forget to commit the version change and create a git tag:"
-	@echo "git commit -am \"Bump version to $(VERSION)\""
-	@echo "git tag v$(VERSION)"
-	@echo "git push && git push --tags"
 
 # Help target
 help:
