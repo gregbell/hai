@@ -1,6 +1,6 @@
 # Main Makefile for hai
 
-.PHONY: all build test doc clean install uninstall help release
+.PHONY: all build test doc clean install uninstall help release gifs
 
 # Default target
 all: build doc
@@ -17,10 +17,15 @@ test:
 doc:
 	$(MAKE) -C doc
 
+# Generate GIFs in ./assets
+gifs:
+	$(MAKE) -C assets
+
 # Clean build artifacts
 clean:
 	cargo clean
 	$(MAKE) -C doc clean
+	$(MAKE) -C assets clean
 	rm -rf release
 
 # Install the application and documentation
@@ -107,6 +112,7 @@ help:
 	@echo "  build            - Build the application"
 	@echo "  test             - Run tests"
 	@echo "  doc              - Build documentation"
+	@echo "  gifs             - Generate GIFs in ./assets"
 	@echo "  clean            - Remove build artifacts"
 	@echo "  install          - Install the application and documentation to system directories"
 	@echo "  local-install    - Install the application to /usr/local/bin"
@@ -117,4 +123,7 @@ help:
 	@echo "  help             - Show this help message"
 	@echo
 	@echo "Documentation targets (run with make -C doc):"
-	@$(MAKE) -C doc help 
+	@$(MAKE) -C doc help
+	@echo
+	@echo "GIF targets (run with make -C assets):"
+	@$(MAKE) -C assets help 
