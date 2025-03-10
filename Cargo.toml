@@ -47,3 +47,8 @@ chrono = { version = "0.4", features = ["serde"] }
 
 [build-dependencies]
 cargo-deb = "2.11"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
