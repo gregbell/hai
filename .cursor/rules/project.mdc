@@ -45,6 +45,7 @@ Hai is a tiny CLI tool that turns natural language into Bash or Zsh commands. Yo
 - Use `.await` responsibly, ensuring safe points for context switching.
 
 ## Testing
+- Run the tests with `make test`
 - Write unit tests for all functions and modules
 - For async tests, write unit tests with `tokio::test`
 - Use `tokio::time::pause` for testing time-dependent code without real delays.
