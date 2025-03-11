@@ -3,13 +3,14 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 
 use super::Provider;
+use crate::config::Config;
 
 pub struct MockProvider {
     responses: HashMap<String, String>,
 }
 
 impl MockProvider {
-    pub fn new() -> Self {
+    pub fn new(_config: Config) -> Self {
         let mut responses = HashMap::new();
         responses.insert("list all files".to_string(), "ls -la".to_string());
         responses.insert(

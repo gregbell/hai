@@ -4,6 +4,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use super::Provider;
+use crate::config::Config;
 
 const OPENAI_API_URL: &str = "https://api.openai.com/v1/chat/completions";
 
@@ -40,14 +41,16 @@ pub struct OpenAIProvider {
     client: Client,
     model: String,
     auth_token: String,
+    config: Config,
 }
 
 impl OpenAIProvider {
-    pub fn new(model: String, auth_token: String) -> Self {
+    pub fn new(model: String, auth_token: String, config: Config) -> Self {
         Self {
             client: Client::new(),
             model,
             auth_token,
+            config,
         }
     }
 }
@@ -67,8 +70,8 @@ impl Provider for OpenAIProvider {
                     content: prompt.to_string(),
                 },
             ],
-            temperature: 0.3,
-            max_tokens: 100,
+            temperature: self.config.temperature(),
+            max_tokens: self.config.max_tokens() as u32,
         };
 
         let response = self

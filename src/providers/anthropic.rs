@@ -4,6 +4,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use super::Provider;
+use crate::config::Config;
 
 const ANTHROPIC_API_URL: &str = "https://api.anthropic.com/v1/messages";
 
@@ -35,14 +36,16 @@ pub struct AnthropicProvider {
     client: Client,
     model: String,
     auth_token: String,
+    config: Config,
 }
 
 impl AnthropicProvider {
-    pub fn new(model: String, auth_token: String) -> Self {
+    pub fn new(model: String, auth_token: String, config: Config) -> Self {
         Self {
             client: Client::new(),
             model,
             auth_token,
+            config,
         }
     }
 }
@@ -52,7 +55,7 @@ impl Provider for AnthropicProvider {
     async fn get_command_suggestion(&self, prompt: &str, system_prompt: String) -> Result<String> {
         let request = AnthropicRequest {
             model: self.model.clone(),
-            max_tokens: 100,
+            max_tokens: self.config.max_tokens() as u32,
             messages: vec![Message {
                 role: "user".to_string(),
                 content: prompt.to_string(),

@@ -11,15 +11,16 @@ pub use anthropic::AnthropicProvider;
 pub use mock::MockProvider;
 pub use openai::OpenAIProvider;
 
+use crate::config::Config;
+
 #[async_trait]
 pub trait Provider: Send + Sync {
     async fn get_command_suggestion(&self, prompt: &str, system_prompt: String) -> Result<String>;
 }
 
-pub fn create_provider(model_name: &str, config: &crate::Config) -> Result<Box<dyn Provider>> {
+pub fn create_provider(model_name: &str, config: &Config) -> Result<Box<dyn Provider>> {
     let model_config = config
-        .models
-        .as_ref()
+        .models()
         .and_then(|models| models.get(model_name))
         .ok_or_else(|| anyhow!("Model '{}' not found in config", model_name))?;
 
@@ -27,13 +28,21 @@ pub fn create_provider(model_name: &str, config: &crate::Config) -> Result<Box<d
         .model
         .clone()
         .unwrap_or_else(|| model_name.to_string());
-    let auth_token = model_config.auth_token.clone();
+    let auth_token = config.get_provider_auth_token(&model_config.provider, model_config);
 
     match model_config.provider.as_str() {
-        "openai" => Ok(Box::new(OpenAIProvider::new(model, auth_token))),
-        "anthropic" => Ok(Box::new(AnthropicProvider::new(model, auth_token))),
+        "openai" => Ok(Box::new(OpenAIProvider::new(
+            model,
+            auth_token,
+            config.clone(),
+        ))),
+        "anthropic" => Ok(Box::new(AnthropicProvider::new(
+            model,
+            auth_token,
+            config.clone(),
+        ))),
         #[cfg(test)]
-        "mock" => Ok(Box::new(MockProvider::new())),
+        "mock" => Ok(Box::new(MockProvider::new(config.clone()))),
         _ => Err(anyhow!("Unknown provider: {}", model_config.provider)),
     }
 }

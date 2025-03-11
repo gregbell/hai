@@ -52,10 +52,11 @@ impl History {
 
     pub fn load() -> Result<Self> {
         let history_path = get_history_path()?;
+        let config = crate::config::load_config()?;
 
         if !history_path.exists() {
-            // Default to 50 entries if not specified
-            return Ok(Self::new(50));
+            // Use history_size from config
+            return Ok(Self::new(config.history_size()));
         }
 
         let history_str = fs::read_to_string(&history_path).map_err(|e| {
@@ -65,12 +66,15 @@ impl History {
             ))
         })?;
 
-        let history: History = serde_json::from_str(&history_str).map_err(|e| {
+        let mut history: History = serde_json::from_str(&history_str).map_err(|e| {
             HaiError::serialization(format!(
                 "Failed to parse history file at {:?}: {}",
                 history_path, e
             ))
         })?;
+
+        // Update max_size from config in case it changed
+        history.max_size = config.history_size();
 
         Ok(history)
     }
