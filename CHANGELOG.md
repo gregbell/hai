@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Improved error messages
+
 ## v0.1.0 (2025-03-09)
 
 Initial release
