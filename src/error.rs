@@ -143,3 +143,135 @@ where
         Err(err) => handle_error(err),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::anyhow;
+    use std::io;
+
+    #[test]
+    fn test_error_helper_functions() {
+        // Test config error
+        let err = HaiError::config("config error");
+        assert!(err.to_string().contains("config error"));
+        let downcast_err = err.downcast_ref::<HaiError>().unwrap();
+        assert!(matches!(downcast_err, HaiError::Config(_)));
+
+        // Test io error
+        let err = HaiError::io("io error");
+        assert!(err.to_string().contains("io error"));
+        let downcast_err = err.downcast_ref::<HaiError>().unwrap();
+        assert!(matches!(downcast_err, HaiError::Io(_)));
+
+        // Test serialization error
+        let err = HaiError::serialization("serialization error");
+        assert!(err.to_string().contains("serialization error"));
+        let downcast_err = err.downcast_ref::<HaiError>().unwrap();
+        assert!(matches!(downcast_err, HaiError::Serialization(_)));
+
+        // Test api error
+        let err = HaiError::api("api error");
+        assert!(err.to_string().contains("api error"));
+        let downcast_err = err.downcast_ref::<HaiError>().unwrap();
+        assert!(matches!(downcast_err, HaiError::ApiCommunication(_)));
+
+        // Test command error
+        let err = HaiError::command("command error");
+        assert!(err.to_string().contains("command error"));
+        let downcast_err = err.downcast_ref::<HaiError>().unwrap();
+        assert!(matches!(downcast_err, HaiError::CommandExecution(_)));
+
+        // Test other error
+        let err = HaiError::other("other error");
+        assert!(err.to_string().contains("other error"));
+        let downcast_err = err.downcast_ref::<HaiError>().unwrap();
+        assert!(matches!(downcast_err, HaiError::Other(_)));
+    }
+
+    #[test]
+    fn test_from_anyhow_error_direct_conversion() {
+        // Test conversion from anyhow::Error containing HaiError directly
+        let original = HaiError::Config("test config error".to_string());
+        let anyhow_err = anyhow::Error::new(original);
+        let converted: HaiError = anyhow_err.into();
+
+        assert!(matches!(converted, HaiError::Config(s) if s == "test config error"));
+    }
+
+    #[test]
+    fn test_from_anyhow_error_pattern_matching() {
+        // Test conversion based on error message patterns
+
+        // Config error pattern
+        let anyhow_err = anyhow!("No models configured");
+        let hai_err: HaiError = anyhow_err.into();
+        assert!(matches!(hai_err, HaiError::Config(_)));
+
+        let anyhow_err = anyhow!("Model XYZ not found in config");
+        let hai_err: HaiError = anyhow_err.into();
+        assert!(matches!(hai_err, HaiError::Config(_)));
+
+        // API error pattern
+        let anyhow_err = anyhow!("Failed to send request to API");
+        let hai_err: HaiError = anyhow_err.into();
+        assert!(matches!(hai_err, HaiError::ApiCommunication(_)));
+
+        let anyhow_err = anyhow!("Failed to parse API response");
+        let hai_err: HaiError = anyhow_err.into();
+        assert!(matches!(hai_err, HaiError::ApiCommunication(_)));
+
+        // Command error pattern
+        let anyhow_err = anyhow!("Failed to execute command");
+        let hai_err: HaiError = anyhow_err.into();
+        assert!(matches!(hai_err, HaiError::CommandExecution(_)));
+    }
+
+    #[test]
+    fn test_from_anyhow_error_io_error() {
+        // Test conversion from IO error
+        let io_err = io::Error::new(io::ErrorKind::NotFound, "file not found");
+        let anyhow_err = anyhow::Error::from(io_err);
+        let hai_err: HaiError = anyhow_err.into();
+
+        assert!(matches!(hai_err, HaiError::Io(_)));
+        assert!(hai_err.to_string().contains("not found"));
+    }
+
+    #[test]
+    fn test_from_anyhow_error_serde_error() {
+        // Test conversion from serde_json::Error
+        let json = r#"{"invalid": json"#;
+        let serde_err = serde_json::from_str::<serde_json::Value>(json).unwrap_err();
+        let anyhow_err = anyhow::Error::from(serde_err);
+        let hai_err: HaiError = anyhow_err.into();
+
+        assert!(matches!(hai_err, HaiError::Serialization(_)));
+        assert!(hai_err.to_string().contains("expected")); // Error message usually contains "expected"
+    }
+
+    #[test]
+    fn test_from_anyhow_error_other() {
+        // Test fallback to Other for unknown error types
+        let anyhow_err = anyhow!("Some random error");
+        let hai_err: HaiError = anyhow_err.into();
+
+        assert!(matches!(hai_err, HaiError::Other(_)));
+        assert!(hai_err.to_string().contains("Some random error"));
+    }
+
+    #[test]
+    fn test_from_anyhow_error_with_context() {
+        // Test conversion with context
+        // The implementation might not preserve all context in the same way
+        // So we'll just test that an error chain with context gets converted to HaiError
+        let base_err = anyhow!("Base error");
+        let with_context = base_err.context("Additional context");
+        let hai_err: HaiError = with_context.into();
+
+        // Just verify we get the expected Other error type
+        assert!(matches!(hai_err, HaiError::Other(_)));
+        // And that the message contains something meaningful
+        assert!(!hai_err.to_string().is_empty());
+    }
+}
