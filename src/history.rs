@@ -1,8 +1,9 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+use crate::error::HaiError;
 use crate::utils;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -57,11 +58,19 @@ impl History {
             return Ok(Self::new(50));
         }
 
-        let history_str =
-            fs::read_to_string(history_path).context("Failed to read history file")?;
+        let history_str = fs::read_to_string(&history_path).map_err(|e| {
+            HaiError::io(format!(
+                "Failed to read history file at {:?}: {}",
+                history_path, e
+            ))
+        })?;
 
-        let history: History =
-            serde_json::from_str(&history_str).context("Failed to parse history file")?;
+        let history: History = serde_json::from_str(&history_str).map_err(|e| {
+            HaiError::serialization(format!(
+                "Failed to parse history file at {:?}: {}",
+                history_path, e
+            ))
+        })?;
 
         Ok(history)
     }
@@ -69,18 +78,24 @@ impl History {
     pub fn save(&self) -> Result<()> {
         let history_path = get_history_path()?;
 
-        let history_str =
-            serde_json::to_string_pretty(self).context("Failed to serialize history")?;
+        let history_str = serde_json::to_string_pretty(self)
+            .map_err(|e| HaiError::serialization(format!("Failed to serialize history: {}", e)))?;
 
-        fs::write(history_path, history_str).context("Failed to write history file")?;
+        fs::write(&history_path, history_str).map_err(|e| {
+            HaiError::io(format!(
+                "Failed to write history file to {:?}: {}",
+                history_path, e
+            ))
+        })?;
 
         Ok(())
     }
 }
 
 fn get_history_path() -> Result<PathBuf> {
-    let config_dir = utils::ensure_config_dir()?;
-    Ok(config_dir.join("history.json"))
+    utils::ensure_config_dir()
+        .map(|dir| dir.join("history.json"))
+        .map_err(|e| HaiError::config(format!("Failed to ensure config directory: {}", e)))
 }
 
 #[cfg(test)]

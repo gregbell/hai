@@ -10,6 +10,8 @@ mod history;
 mod providers;
 mod utils;
 
+use error::run_with_error_handling;
+
 // Default system prompt used across the application
 const DEFAULT_SYSTEM_PROMPT: &str = "
 You are Hai, a helpful AI that converts natural language to shell commands. 
@@ -455,7 +457,7 @@ async fn run() -> Result<()> {
 }
 
 fn main() -> ! {
-    error::run_with_error_handling(|| {
+    run_with_error_handling(|| {
         tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
