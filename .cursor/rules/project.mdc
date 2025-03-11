@@ -1,0 +1,57 @@
+---
+description: General project wide rules
+globs: 
+alwaysApply: false
+---
+# General project rules
+
+Hai is a tiny CLI tool that turns natural language into Bash or Zsh commands. You describe what you want to do, hai suggests a command, and asks if you'd like to run it. A simple, unix-y tool that does one thing /really/ well.
+
+## Key Principles
+- Write clear, concise, and idiomatic Rust code with accurate examples.
+- Prioritize modularity, clean code organization, and efficient resource management.
+- Use expressive variable names that convey intent (e.g., `is_ready`, `has_data`).
+- Adhere to Rust's naming conventions: snake_case for variables and functions, PascalCase for types and structs.
+- Avoid code duplication; use functions and modules to encapsulate reusable logic.
+- Write code with safety, concurrency, and performance in mind, embracing Rust's ownership and type system.
+- Avoid adding new scripts or crates unless absolutely necessary
+- Use the [Makefile](mdc:Makefile) for any build scripting
+- Use .github/workflows for any CI builds or automation
+
+## User Experience
+- Users of hai configure the CLI using a config file by default at ~/.config/hai/config.toml
+- The CLI should have simple flags that have defaults in the config file
+- When it makes sense, we should support ENV variables starting with HAI_ for configuration
+- Hai should be supporeted on Linux, Mac, and Windows.
+
+## Documentation
+- The [README.md](mdc:README.md) is meant as a project jumping off point. It should be high level and link to more detailed documentation when required.
+- The [manual.md](mdc:doc/manual.md) is a full manual that is expected to a man page
+- The [config.md](mdc:doc/config.md) is also exported as a man page for the configuration format
+
+## Async Programming
+- Use `tokio` as the async runtime for handling asynchronous tasks and I/O.
+- Implement async functions using `async fn` syntax.
+- Leverage `tokio::spawn` for task spawning and concurrency.
+- Use `tokio::select!` for managing multiple async tasks and cancellations.
+- Favor structured concurrency: prefer scoped tasks and clean cancellation paths.
+- Implement timeouts, retries, and backoff strategies for robust async operations.
+
+## Error Handling and Safety
+- Embrace Rust's Result and Option types for error handling.
+- Use `?` operator to propagate errors in async functions.
+- Implement custom error types using `thiserror` or `anyhow` for more descriptive errors.
+- Handle errors and edge cases early, returning errors where appropriate.
+- Use `.await` responsibly, ensuring safe points for context switching.
+
+## Testing
+- Write unit tests for all functions and modules
+- For async tests, write unit tests with `tokio::test`
+- Use `tokio::time::pause` for testing time-dependent code without real delays.
+- Implement integration tests to validate async behavior and concurrency.
+- Use mocks and fakes for external dependencies in tests.
+
+## Async Ecosystem
+- Use `tokio` for async runtime and task management.
+- Leverage `reqwest` for async HTTP requests.
+- Use `serde` for serialization/deserialization.
