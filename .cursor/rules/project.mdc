@@ -15,8 +15,9 @@ Hai is a tiny CLI tool that turns natural language into Bash or Zsh commands. Yo
 - Avoid code duplication; use functions and modules to encapsulate reusable logic.
 - Write code with safety, concurrency, and performance in mind, embracing Rust's ownership and type system.
 - Avoid adding new scripts or crates unless absolutely necessary
-- Use the [Makefile](mdc:Makefile) for any build scripting
+- Use the [Makefile](mdc:Makefile) for any build scripting, don't make seperate script files unless absolutely necessary
 - Use .github/workflows for any CI builds or automation
+- Don't add or commit anything to git, let the user do that themselves
 
 ## User Experience
 - Users of hai configure the CLI using a config file by default at ~/.config/hai/config.toml
