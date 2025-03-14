@@ -35,6 +35,9 @@ The documentation Makefile provides several targets:
 ## Requirements
 
 - [pandoc](https://pandoc.org/) is required to convert Markdown to man pages
+  - On Debian/Ubuntu: `apt-get install pandoc`
+  - On macOS: `brew install pandoc`
+  - On Windows: `choco install pandoc`
 - Standard Unix tools (`make`, `install`, etc.)
 
 ## Viewing Man Pages

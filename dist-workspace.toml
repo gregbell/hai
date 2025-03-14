@@ -32,6 +32,11 @@ include = [
 # This will run before cargo-dist builds the package
 [dist.build-steps]
 pre-dist = [
+    # Install pandoc for man page generation based on platform
+    "if command -v apt-get >/dev/null 2>&1; then apt-get update && apt-get install -y pandoc make; elif command -v brew >/dev/null 2>&1; then brew install pandoc; elif command -v choco >/dev/null 2>&1; then choco install pandoc -y; fi",
+    # Create man directories if they don't exist
+    "mkdir -p man/man1 man/man5",
+    # Build the man pages
     "make -C doc"
 ]
 

@@ -131,6 +131,11 @@ hai is written in Rust. To build from source:
 git clone https://github.com/gregbell/hai.git
 cd hai
 
+# Install pandoc (required for building man pages)
+# On Debian/Ubuntu: apt-get install pandoc
+# On macOS: brew install pandoc
+# On Windows: choco install pandoc
+
 # Build the application and documentation
 make
 
