@@ -1,8 +1,8 @@
 # hai
 
-Meet **hai**, a tiny CLI tool that turns natural language into Bash or Zsh
-commands. You describe what you want to do, hai suggests a command, and asks if
-you'd like to run it. A simple, unix-y tool that does one thing /really/ well.
+Meet **hai**, a tiny CLI tool that turns natural language into shell commands.
+You describe what you want to do, hai suggests a command, and asks if you'd like
+to run it. A simple, unix-y tool that does one thing /really/ well.
 
 ![Hai creating a compressed tarball](assets/tarball.gif)
 
@@ -55,6 +55,35 @@ Full documentation is available in the man pages:
 
 ## Installation
 
+### Using the Shell Installer (macOS, Linux)
+
+The easiest way to install hai on macOS or Linux is using the shell installer:
+
+```bash
+# Install the latest version
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/gregbell/hai/releases/latest/download/hai-installer.sh | sh
+```
+
+### Using PowerShell Installer (Windows)
+
+For Windows users, you can install hai using PowerShell:
+
+```powershell
+# Install the latest version
+irm https://github.com/gregbell/hai/releases/latest/download/hai-installer.ps1 | iex
+```
+
+### Using Homebrew (macOS, Linux)
+
+```bash
+# Add the tap and install
+brew tap gregbell/tap/hai
+```
+
+### From GitHub Releases
+
+You can download pre-built binaries for your platform from the [GitHub Releases page](https://github.com/gregbell/hai/releases).
+
 ### From Source
 
 1. Clone the repository:
@@ -81,10 +110,6 @@ Full documentation is available in the man pages:
    ```
 
 This will guide you through setting up your configuration and API keys.
-
-### From Package Managers
-
-Coming soon!
 
 ## Contributing
 
