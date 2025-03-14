@@ -1,4 +1,4 @@
-% HAI(1) hai 0.1.0
+% HAI(1) hai 0.2.0
 
 # NAME
 

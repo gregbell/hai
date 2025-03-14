@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## v0.2.0 (2025-03-14)
 
 ### Added
 
@@ -10,6 +10,8 @@
 ## Changed
 
 - Improved system prompt for better error messages
+- Added automated version bumping via `make bump-version VERSION=x.y.z`
+- Improved release process with consistent versioning across all project files
 
 ## v0.1.0 (2025-03-09)
 

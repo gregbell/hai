@@ -1,6 +1,6 @@
 [package]
 name = "hai"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "~ tiny CLI tool that turns natural language into Bash or Zsh commands"
 authors = ["Greg Bell <code@gregbell.ca>"]

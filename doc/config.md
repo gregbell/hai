@@ -1,4 +1,4 @@
-% HAI-CONFIG(5) hai 0.1.0
+% HAI-CONFIG(5) hai 0.2.0
 
 # NAME
 

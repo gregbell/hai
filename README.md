@@ -154,7 +154,7 @@ make clean
 To create a release tarball:
 
 ```bash
-make release VERSION=0.1.0
+make release VERSION=0.2.0
 ```
 
 This will:
@@ -163,6 +163,28 @@ This will:
 2. Build the application
 3. Create a release tarball with the binary, documentation, and man pages
 4. Output instructions for creating a git tag
+
+### Bumping Version
+
+To bump the version across all project files:
+
+```bash
+make bump-version VERSION=0.2.0
+```
+
+This will update the version number in:
+
+- Cargo.toml
+- Documentation files
+- Test files
+- README.md
+- CHANGELOG.md (adds a new entry)
+
+After running this command, you should:
+
+1. Review and update the CHANGELOG.md with the new features/fixes
+2. Commit the changes
+3. Create a release when ready
 
 ## License
 

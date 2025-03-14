@@ -28,6 +28,6 @@ mod tests {
         let stdout = String::from_utf8_lossy(&output.stdout);
 
         assert!(stdout.contains("hai"));
-        assert!(stdout.contains("0.1.0"));
+        assert!(stdout.contains("0.2.0"));
     }
 }
