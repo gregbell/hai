@@ -53,6 +53,10 @@ Full documentation is available in the man pages:
 - [hai(1)](doc/manual.md) - Main command documentation
 - [hai-config(5)](doc/config.md) - Configuration file documentation
 
+All installation methods include these man pages, which are installed to
+standard system locations and can be accessed with `man hai` and `man
+hai-config` after installation.
+
 ## Installation
 
 ### Using the Shell Installer (macOS, Linux)
@@ -63,6 +67,8 @@ The easiest way to install hai on macOS or Linux is using the shell installer:
 # Install the latest version
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/gregbell/hai/releases/latest/download/hai-installer.sh | sh
 ```
+
+This will install hai to `~/.local/bin` (following XDG standards) and man pages to standard system locations.
 
 ### Using PowerShell Installer (Windows)
 
@@ -96,7 +102,7 @@ You can download pre-built binaries for your platform from the [GitHub Releases 
 2. Build and install:
 
    ```bash
-   # Build and install to /usr/local/bin (may require sudo)
+   # Build and install to ~/.local/bin (XDG standard location)
    make local-install
 
    # Or for a system-wide installation

@@ -48,14 +48,20 @@ man -l ../man/man5/hai-config.5
 
 ## Installation
 
-When the package is installed, the man pages will be installed to the standard man page directories:
+When the package is installed, the man pages will be installed to standard man page directories:
 
-- `/usr/share/man/man1/hai.1`
-- `/usr/share/man/man5/hai-config.5`
+- System-wide: `/usr/share/man/man1/hai.1` and `/usr/share/man/man5/hai-config.5`
+- User-specific (XDG standard): `~/.local/share/man/man1/hai.1` and `~/.local/share/man/man5/hai-config.5`
 
-After installation, you can view them with:
+The installer will choose the appropriate location based on write permissions. After installation, you can view them with:
 
 ```bash
 man hai
 man hai-config
-``` 
+```
+
+If the man pages were installed to a non-standard location, you may need to add it to your `MANPATH`:
+
+```bash
+export MANPATH="$MANPATH:$HOME/.local/share/man"
+```

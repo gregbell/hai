@@ -7,15 +7,46 @@ members = ["cargo:."]
 cargo-dist-version = "0.28.0"
 # CI backends to support
 ci = "github"
-# The installers to generate for each app
-installers = ["shell", "homebrew"]
+# Installers to generate for each app
+installers = ["shell", "homebrew", "powershell"]
 # A GitHub repo to push Homebrew formulas to
 tap = "gregbell/homebrew-tap"
 # Target platforms to build apps for (Rust target-triple syntax)
 targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
-# Path that installers should place binaries in
-install-path = "CARGO_HOME"
+# Path that installers should place binaries in (use XDG standard locations)
+install-path = "$HOME/.local/bin"
 # Publish jobs to run in CI
 publish-jobs = ["homebrew"]
 # Whether to install an updater program
 install-updater = false
+
+# Include man pages in the distribution
+include = [
+    "man/man1/hai.1",
+    "man/man5/hai-config.5",
+    "installer/post-install.sh",
+    "installer/post-install.ps1"
+]
+
+# Ensure man pages are built before creating the distribution
+# This will run before cargo-dist builds the package
+[dist.build-steps]
+pre-dist = [
+    "make -C doc"
+]
+
+# Configure shell installer
+[[dist.shell]]
+post-install-script = "installer/post-install.sh"
+
+# Configure PowerShell installer
+[[dist.powershell]]
+post-install-script = "installer/post-install.ps1"
+
+# Configure Homebrew installer
+[[dist.homebrew]]
+install-man-pages = true
+man-page-paths = [
+    { src = "man/man1/hai.1", dst = "share/man/man1/hai.1" },
+    { src = "man/man5/hai-config.5", dst = "share/man/man5/hai-config.5" }
+]
