@@ -12,9 +12,10 @@ use crate::utils;
 pub const DEFAULT_SYSTEM_PROMPT: &str = "
 You are Hai, a helpful AI that converts natural language to shell commands. 
 Respond with ONLY the shell command, no explanations or markdown formatting.
-Make sure commands are compatible with the user's environment.
+Make sure commands are compatible with the user's environment and shell.
 Your name is Hai. 
-If the request from the user is not a clear shell command, respond with a whitty and irrevant message using the \"echo\" command.
+If the request from the user is not a clear shell command, respond with a witty but nice message using the \"echo\" command.
+Adapt your commands to the specific shell syntax (Bash, Zsh, Fish, PowerShell) that the user is using.
 ";
 
 #[derive(Debug, Deserialize, Clone)]
@@ -64,9 +65,44 @@ impl Config {
 
     /// Get the shell to use for command execution
     pub fn shell(&self) -> String {
-        env::var("SHELL")
-            .ok()
-            .unwrap_or_else(|| self.shell.clone().unwrap_or_else(|| "bash".to_string()))
+        // First check if the user has explicitly set a shell in the config
+        if let Some(shell) = &self.shell {
+            return shell.clone();
+        }
+
+        // Then check the SHELL environment variable
+        if let Ok(shell_path) = env::var("SHELL") {
+            let shell_name = std::path::Path::new(&shell_path)
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("bash");
+
+            return shell_name.to_string();
+        }
+
+        // On Windows, check if PowerShell is available
+        if env::consts::OS == "windows" {
+            // Try to detect PowerShell Core (pwsh) first, then fallback to Windows PowerShell
+            if Command::new("pwsh")
+                .arg("-Command")
+                .arg("exit")
+                .status()
+                .is_ok()
+            {
+                return "pwsh".to_string();
+            }
+            if Command::new("powershell")
+                .arg("-Command")
+                .arg("exit")
+                .status()
+                .is_ok()
+            {
+                return "powershell".to_string();
+            }
+        }
+
+        // Default to bash
+        "bash".to_string()
     }
 
     /// Get the maximum number of history entries to keep
@@ -87,14 +123,18 @@ impl Config {
 
         // Get shell information
         let shell = self.shell();
-        let shell_name = std::path::Path::new(&shell)
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or("unknown");
+        let shell_info = match shell.as_str() {
+            "fish" => "Fish shell (fish)",
+            "powershell" => "Windows PowerShell",
+            "pwsh" => "PowerShell Core (pwsh)",
+            "bash" => "Bash shell (bash)",
+            "zsh" => "Z shell (zsh)",
+            _ => &shell,
+        };
 
         format!(
-            "{}\nOperating System: {} {}\nShell: {}\nPlease ensure all commands are compatible with this environment.",
-            base_prompt, os_name, os_version, shell_name
+            "{}\nOperating System: {} {}\nShell: {}\nPlease ensure all commands are compatible with this environment and shell syntax.",
+            base_prompt, os_name, os_version, shell_info
         )
     }
 
@@ -355,5 +395,34 @@ mod tests {
         env::remove_var("HAI_SKIP_SETUP");
 
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_shell_detection() {
+        // Test explicit shell in config
+        let config = Config {
+            default_model: None,
+            temperature: None,
+            shell: Some("fish".to_string()),
+            history_size: None,
+            system_prompt: None,
+            max_tokens: None,
+            models: None,
+        };
+        assert_eq!(config.shell(), "fish");
+
+        // Test SHELL environment variable
+        let config = Config {
+            default_model: None,
+            temperature: None,
+            shell: None,
+            history_size: None,
+            system_prompt: None,
+            max_tokens: None,
+            models: None,
+        };
+        env::set_var("SHELL", "/usr/bin/fish");
+        assert_eq!(config.shell(), "fish");
+        env::remove_var("SHELL");
     }
 }

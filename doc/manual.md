@@ -1,4 +1,4 @@
-% HAI(1) hai 0.1.0 
+% HAI(1) hai 0.1.0
 
 # NAME
 
@@ -21,7 +21,8 @@ system prompts.
 
 When given a natural language prompt, **hai** sends it to the configured AI
 provider along with system information about the user's environment to ensure
-the generated commands are compatible with the user's system.
+the generated commands are compatible with the user's system. It supports
+multiple shells including Bash, Zsh, Fish, and PowerShell.
 
 # OPTIONS
 
@@ -31,7 +32,7 @@ the generated commands are compatible with the user's system.
 **-n**, **--no-execute**
 : Show the command, but don't run it
 
-**-m**, **--model** *MODEL*
+**-m**, **--model** _MODEL_
 : Select the model to use (gpt-4, claude-3, etc.)
 
 **-H**, **--history**
@@ -54,9 +55,9 @@ format.
 
 # FILES
 
-*~/.config/hai/config.toml* : User configuration file
+_~/.config/hai/config.toml_ : User configuration file
 
-*~/.local/share/hai/history.json* : Command history file
+_~/.local/share/hai/history.json_ : Command history file
 
 # ENVIRONMENT
 
@@ -68,7 +69,6 @@ format.
 
 **HAI_ANTHROPIC_TOKEN**
 : Set the Anthropic API token
-
 
 # EXAMPLES
 
@@ -123,4 +123,4 @@ law.
 
 # SEE ALSO
 
-**hai-config**(5) 
+**hai-config**(5)

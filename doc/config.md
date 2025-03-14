@@ -6,7 +6,7 @@ hai-config - configuration file for the hai command
 
 # SYNOPSIS
 
-*~/.config/hai/config.toml*
+_~/.config/hai/config.toml_
 
 # DESCRIPTION
 
@@ -29,10 +29,11 @@ correspond to a model defined in the [models] section. Default: "gpt-4o-mini".
 values make responses more deterministic, higher values make responses more
 creative. Default: 0.3.
 
-**shell** : The shell to use for executing commands. Defaults to your $SHELL.
+**shell** : The shell to use for executing commands. Supported shells include
+bash, zsh, fish, powershell, and pwsh. Defaults to your $SHELL environment
+variable on Unix-like systems and PowerShell on Windows.
 
-**history-size** : Maximum number of past commands to keep in history. Default:
-50.
+**history-size** : Maximum number of past commands to keep in history. Default: 50.
 
 **system-prompt** : Specifies the system prompt for the AI model. The default
 prompt contains instructions for generating shell commands compatible with the
@@ -74,7 +75,7 @@ A configuration with multiple models:
 ```toml
 default-model = "gpt-4o-mini"
 temperature = 0.5
-shell = "zsh"
+shell = "zsh"  # Can be "bash", "zsh", "fish", "powershell", or "pwsh"
 history-size = 100
 system-prompt = "You are a helpful AI that converts natural language to shell commands. Respond with ONLY the shell command, no explanations or markdown formatting. Make sure commands are compatible with the user's environment."
 max-tokens = 150
@@ -97,8 +98,8 @@ auth-token = "sk-your-anthropic-api-key"
 
 # FILES
 
-*~/.config/hai/config.toml* : User configuration file
+_~/.config/hai/config.toml_ : User configuration file
 
 # SEE ALSO
 
-**hai**(1) 
+**hai**(1)

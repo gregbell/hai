@@ -57,11 +57,23 @@ async fn get_command_suggestion(prompt: &str, config: &Config) -> Result<String>
 
 fn execute_command(command: &str, shell: &str) -> Result<()> {
     // Run the command using the specified shell
-    let status = Command::new(shell)
-        .arg("-c")
-        .arg(command)
-        .status()
-        .context("Failed to execute command")?;
+    let status = match shell {
+        "powershell" | "pwsh" => Command::new(shell)
+            .arg("-Command")
+            .arg(command)
+            .status()
+            .context("Failed to execute PowerShell command")?,
+        "fish" => Command::new(shell)
+            .arg("-c")
+            .arg(command)
+            .status()
+            .context("Failed to execute Fish command")?,
+        _ => Command::new(shell)
+            .arg("-c")
+            .arg(command)
+            .status()
+            .context("Failed to execute command")?,
+    };
 
     // If command failed, return an error
     if !status.success() {
@@ -226,5 +238,18 @@ mod tests {
         // Test with a command that should fail
         let result = execute_command("exit 1", "bash");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_execute_command_with_different_shells() {
+        // This test is limited since we can't easily mock Command execution
+        // But we can at least test that the function doesn't panic with different shells
+
+        // Test with bash (should be available on most test systems)
+        let result = execute_command("echo 'test'", "bash");
+        assert!(result.is_ok());
+
+        // We can't reliably test fish or powershell as they might not be installed
+        // on the test system, but the code path should be covered by the implementation
     }
 }

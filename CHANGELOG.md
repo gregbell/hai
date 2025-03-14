@@ -2,9 +2,14 @@
 
 ## [Unreleased]
 
-### Changed
+### Added
 
-- Improved error messages
+- Added support for Fish shell and PowerShell
+- Improved shell detection on different operating systems
+
+## Changed
+
+- Improved system prompt for better error messages
 
 ## v0.1.0 (2025-03-09)
 
