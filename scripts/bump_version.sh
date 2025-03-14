@@ -54,6 +54,13 @@ echo "Updating CHANGELOG.md..."
 TODAY=$(date +%Y-%m-%d)
 sed -i "/^## v$CURRENT_VERSION/i ## v$NEW_VERSION ($TODAY)\n\n* \n" CHANGELOG.md
 
+# Update version in README.md
+echo "Updating version in README.md..."
+sed -i "s/make release VERSION=$CURRENT_VERSION/make release VERSION=$NEW_VERSION/" README.md
+sed -i "s/git tag v$CURRENT_VERSION/git tag v$NEW_VERSION/" README.md
+sed -i "s/git push origin v$CURRENT_VERSION/git push origin v$NEW_VERSION/" README.md
+
 echo "Version updated successfully to $NEW_VERSION"
 echo "Please review the changes and update the CHANGELOG.md with the new features/fixes."
-echo "Then commit the changes with: git commit -am \"Bump version to $NEW_VERSION\"" 
+echo "Then commit the changes with: git commit -am \"Bump version to $NEW_VERSION\""
+echo "After committing, tag the release with: git tag v$NEW_VERSION && git push origin v$NEW_VERSION" 

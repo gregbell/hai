@@ -151,18 +151,24 @@ make clean
 
 ### Creating a Release
 
-To create a release tarball:
+To create a release, simply tag the version in git and push the tag:
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+This will trigger GitHub Actions workflows that will:
+
+1. Build the application for all supported platforms
+2. Create release artifacts (tarballs, installers, etc.)
+3. Publish the release on GitHub
+
+The `make release` command is still available for local testing:
 
 ```bash
 make release VERSION=0.2.0
 ```
-
-This will:
-
-1. Update the version in Cargo.toml
-2. Build the application
-3. Create a release tarball with the binary, documentation, and man pages
-4. Output instructions for creating a git tag
 
 ### Bumping Version
 

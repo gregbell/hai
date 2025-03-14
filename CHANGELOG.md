@@ -12,6 +12,7 @@
 - Improved system prompt for better error messages
 - Added automated version bumping via `make bump-version VERSION=x.y.z`
 - Improved release process with consistent versioning across all project files
+- Updated documentation to clarify the GitHub Actions-based release process
 
 ## v0.1.0 (2025-03-09)
 

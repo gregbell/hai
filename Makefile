@@ -125,7 +125,7 @@ help:
 	@echo "  uninstall        - Remove the application and documentation from system directories"
 	@echo "  local-uninstall  - Remove the application from /usr/local/bin"
 	@echo "  deb              - Create a Debian package with documentation"
-	@echo "  release          - Create a release tarball and Debian package (Usage: make release VERSION=x.y.z)"
+	@echo "  release          - Create a local release tarball for testing (Usage: make release VERSION=x.y.z)"
 	@echo "  bump-version     - Bump version across all project files (Usage: make bump-version VERSION=x.y.z)"
 	@echo "  help             - Show this help message"
 	@echo
