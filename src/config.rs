@@ -357,11 +357,29 @@ mod tests {
         assert_eq!(config_no_model.default_model(), "gpt-4o-mini");
         assert_eq!(config_no_model.temperature(), 0.3);
 
-        // Test SHELL override
-        env::set_var("SHELL", "zsh");
-        assert_eq!(config.shell(), "zsh");
+        // Test SHELL override - create a config with no shell set
+        let config_no_shell = Config {
+            default_model: Some("default-model".to_string()),
+            temperature: Some(0.3),
+            shell: None,
+            history_size: Some(100),
+            system_prompt: Some("default prompt".to_string()),
+            max_tokens: Some(50),
+            models: None,
+        };
+
+        // Set SHELL environment variable
+        env::set_var("SHELL", "/usr/bin/zsh");
+        assert_eq!(config_no_shell.shell(), "zsh");
         env::remove_var("SHELL");
+
+        // When no shell is set in config and no SHELL env var, should default to bash
+        assert_eq!(config_no_shell.shell(), "bash");
+
+        // Config with shell set should use that value regardless of SHELL env var
+        env::set_var("SHELL", "/usr/bin/zsh");
         assert_eq!(config.shell(), "bash");
+        env::remove_var("SHELL");
 
         // Test auth token overrides
         let model_config = ModelConfig {
