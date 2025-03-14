@@ -1,6 +1,6 @@
 # Main Makefile for hai
 
-.PHONY: all build test doc clean install uninstall help release gifs
+.PHONY: all build test doc clean install uninstall help release gifs bump-version
 
 # Default target
 all: build doc
@@ -101,6 +101,16 @@ release:
 	@echo "Release created: release/hai-$(VERSION).tar.gz"
 	@echo "Debian package: release/hai_$(VERSION)*.deb"
 
+# Bump version across all project files
+# Usage: make bump-version VERSION=0.2.0
+bump-version:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make bump-version VERSION=x.y.z"; \
+		exit 1; \
+	fi
+	@echo "Bumping version to $(VERSION)"
+	./scripts/bump_version.sh $(VERSION)
+
 # Help target
 help:
 	@echo "Available targets:"
@@ -116,6 +126,7 @@ help:
 	@echo "  local-uninstall  - Remove the application from /usr/local/bin"
 	@echo "  deb              - Create a Debian package with documentation"
 	@echo "  release          - Create a release tarball and Debian package (Usage: make release VERSION=x.y.z)"
+	@echo "  bump-version     - Bump version across all project files (Usage: make bump-version VERSION=x.y.z)"
 	@echo "  help             - Show this help message"
 	@echo
 	@echo "Documentation targets (run with make -C doc):"
