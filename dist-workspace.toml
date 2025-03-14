@@ -36,8 +36,10 @@ pre-dist = [
     "if command -v apt-get >/dev/null 2>&1; then apt-get update && apt-get install -y pandoc make; elif command -v brew >/dev/null 2>&1; then brew install pandoc; elif command -v choco >/dev/null 2>&1; then choco install pandoc -y; fi",
     # Create man directories if they don't exist
     "mkdir -p man/man1 man/man5",
-    # Build the man pages
-    "make -C doc"
+    # Build the man pages using make as per project guidelines
+    "make -C doc",
+    # Verify man pages were created
+    "if [ -f \"man/man1/hai.1\" ] && [ -f \"man/man5/hai-config.5\" ]; then echo \"Man pages successfully built\"; else echo \"Error: Man pages were not built correctly\" && ls -la man/man1 man/man5 && exit 1; fi"
 ]
 
 # Configure shell installer
